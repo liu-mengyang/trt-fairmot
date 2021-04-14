@@ -196,8 +196,6 @@ class DLA(nn.Module):
     def forward(self, x):
         y = []
         x = self.base_layer(x)
-        print("--BaseLayer Output--")
-        print(x.shape)
         for i in range(6):
             x = getattr(self, 'level{}'.format(i))(x)
             y.append(x)
@@ -251,12 +249,8 @@ class IDAUp(nn.Module):
             upsample = getattr(self, 'up_' + str(i - startp))
             project = getattr(self, 'proj_' + str(i - startp))
             layers[i] = upsample(project(layers[i]))
-            print("-project, upsample-")
-            print(layers[i].shape)
             node = getattr(self, 'node_' + str(i - startp))
             layers[i] = node(layers[i] + layers[i - 1])
-            print("-node-")
-            print(layers[i].shape)
 
 # Deep Layer Aggregation Upsample
 class DLAUp(nn.Module):
@@ -330,21 +324,14 @@ class DLASeg(nn.Module):
 
     def forward(self, x):
         x = self.base(x)
-        print("--DLAbase Output--")
         for i in range(len(x)):
-            print(x[i].shape)
         x = self.dla_up(x)
 
         y = []
         for i in range(self.last_level - self.first_level):
             y.append(x[i].clone())
-        print("--DLAUP Output--")
         for i in range(len(y)):
-            print(y[i].shape)
         self.ida_up(y, 0, len(y))
-        
-        print("--DLASeg Output--")
-        print(y[-1].shape)
 
         z = {}
         for head in self.heads:

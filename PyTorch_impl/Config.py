@@ -1,0 +1,1 @@
+BN_MOMENTUM = 0.1

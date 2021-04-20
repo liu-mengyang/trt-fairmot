@@ -16,21 +16,22 @@ model = load_model(net, "../weights/fairmot_dla34.pth")
 model = model.to(torch.device('cuda'))
 model.eval()
 im_blob = torch.randn([1,3,608,1088]).cuda().float()
+print('====', 'fairmot-pytorch', '===')
 output = model(im_blob)
 
 
 # print(output)
 
 output1_data_pytorch = output[0]['hm'].cpu().detach().numpy()
-print(np.mean(output1_data_pytorch))
+# print(np.mean(output1_data_pytorch))
 output2_data_pytorch = output[0]['wh'].cpu().detach().numpy()
 output3_data_pytorch = output[0]['id'].cpu().detach().numpy()
 # print(output1_data_pytorch.shape)
 # print(output2_data_pytorch.shape)
 # print(output3_data_pytorch.shape)
-print(output1_data_pytorch)
-print(output2_data_pytorch)
-print(output3_data_pytorch)
+# print(output1_data_pytorch)
+# print(output2_data_pytorch)
+# print(output3_data_pytorch)
 
 # 10 rounds of PyTorch FairMOT
 # nRound = 10
@@ -64,6 +65,7 @@ for engine_file_path in ['fairmot.trt']:
     trt.print_info()
     i2shape = {0: (1, 3, 608, 1088)}
     io_info = trt.get_io_info(i2shape)
+    # print(io_info)
     d_buffers = trt.allocate_io_buffers(i2shape, True)
     output1_data_trt = np.zeros(io_info[1][2], dtype=np.float32)
     output2_data_trt = np.zeros(io_info[2][2], dtype=np.float32)
@@ -84,9 +86,9 @@ for engine_file_path in ['fairmot.trt']:
     cuda.memcpy_dtoh(output3_data_trt, d_buffers[3])
     # print(np.mean(output1_data_trt))
     
-    print(output1_data_trt)
-    print(output2_data_trt)
-    print(output3_data_trt)
+    # print(output1_data_trt)
+    # print(output2_data_trt)
+    # print(output3_data_trt)
 
     # cuda.Context.synchronize()
     # t0 = time.time()
@@ -97,6 +99,6 @@ for engine_file_path in ['fairmot.trt']:
     # print('TensorRT time:', time_trt)
 
     # print('Speedup:', time_pytorch / time_trt)
-    # print('Average diff percentage1:', np.mean(np.abs(output1_data_pytorch - output1_data_trt) / np.abs(output1_data_pytorch)))
-    # print('Average diff percentage2:', np.mean(np.abs(output2_data_pytorch - output2_data_trt) / np.abs(output2_data_pytorch)))
-    # print('Average diff percentage3:', np.mean(np.abs(output3_data_pytorch - output3_data_trt) / np.abs(output3_data_pytorch)))
+    print('Average diff percentage1:', np.mean(np.abs(output1_data_pytorch - output1_data_trt) / np.abs(output1_data_pytorch)))
+    print('Average diff percentage2:', np.mean(np.abs(output2_data_pytorch - output2_data_trt) / np.abs(output2_data_pytorch)))
+    print('Average diff percentage3:', np.mean(np.abs(output3_data_pytorch - output3_data_trt) / np.abs(output3_data_pytorch)))

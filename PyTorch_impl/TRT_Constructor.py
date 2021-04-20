@@ -46,3 +46,7 @@ class TRT_Constructor:
             scale=scale
         )
         return y
+
+    def ReLU(self, relu: nn.ReLU, x):
+        y = self.network.add_parametric_relu(x)
+        return y

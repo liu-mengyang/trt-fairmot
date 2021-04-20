@@ -12,17 +12,13 @@ def get_pose_net(num_layers, heads, head_conv=256, down_ratio=4):
                      head_conv=head_conv)
       return model
 
-def create_model(heads, head_conv):
-    num_layers = 34
-    model = get_pose_net(num_layers=num_layers, heads=heads, head_conv=head_conv)
-    return model
-
 def build_fairmot():
     heads = {'hm': 1,
         'wh': 4,
         'id': 128}
     head_conv = 256
-    net = create_model(heads, head_conv)
+    num_layers = 34
+    net = get_pose_net(num_layers=num_layers, heads=heads, head_conv=head_conv)
     return net
 
 # load model

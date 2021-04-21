@@ -1,4 +1,8 @@
+# some weight files
 *.pth
+*.onnx
+*.trt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

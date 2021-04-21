@@ -7,6 +7,8 @@ from Config import BN_MOMENTUM
 from BasicBlock import BasicBlock
 from Tree import Tree
 
+from TRT_Constructor import TRT_Constructor
+
 # Deep Layer Aggregation Architecture
 class DLA(nn.Module):
     def __init__(self, levels, channels, num_classes=1000,
@@ -90,3 +92,30 @@ class DLA(nn.Module):
             kernel_size=1, stride=1, padding=0, bias=True)
         self.load_state_dict(model_weights)
         # self.fc = fc
+
+    def TRT_export(self, constructor: TRT_Constructor, x):
+        y = []
+        x = _TRT_make_conv_level(constructor, self.base_layer, x)
+        x = _TRT_make_conv_level(constructor, self.level0, x)
+        y.append(x)
+        x = _TRT_make_conv_level(constructor, self.level1, x)
+        y.append(x)
+        for i in range(2, 6):
+            x = getattr(self, 'level{}'.format(i)).TRT_export(constructor, x)
+            y.append(x)
+        return y
+
+
+def _TRT_make_conv_level(constructor: TRT_Constructor, conv_level, x):
+    x = constructor.Conv2d(conv_level[0], x)
+    x = constructor.BatchNorm2d(conv_level[1], x)
+    x = constructor.ReLU(conv_level[2], x)
+    return x
+
+
+if __name__ == '__main__':
+    # 以下为TensorRT对比测试代码
+    from test_fun import test_fun
+    m = DLA([1, 1, 1, 2, 2, 1],
+            [16, 32, 64, 128, 256, 512])  # Pytorch构建的模型
+    test_fun(m)

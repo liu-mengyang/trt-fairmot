@@ -20,14 +20,22 @@ class TRT_Constructor:
         self.network = network
 
     def MaxPool2d(self, pool: nn.MaxPool2d, x: trt.tensorrt.ITensor):
-        stride = pool.stride
+        stride, padding, window_size = pool.stride, pool.padding, pool.kernel_size
+        tlist = [stride, padding, window_size]
+        tlist = [[a, a] if type(a) is int else list(a) for a in tlist]
+        tlist = [trt.tensorrt.DimsHW(a) for a in tlist]
+        stride, padding, window_size = tlist
+        if type(window_size) is int:
+            window_size = [window_size, window_size]
+        else:
+            window_size = list(window_size)
         y = self.network.add_pooling(
             input=x,
             type=trt.PoolingType.MAX,
-            window_size=stride
+            window_size=window_size
         )
-        y.stride = pool.stride
-        y.padding = pool.padding
+        y.stride = stride
+        y.padding = padding
         return y.get_output(0)
 
     def Conv2d(self, conv: nn.Conv2d, x: trt.tensorrt.ITensor):

@@ -38,7 +38,11 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     constructor = TRT_Constructor(network)
     output = m.TRT_export(constructor, inputT0)
 
-    network.mark_output(output)
+    if type(output) is list:
+        for o in output:
+            network.mark_output(o)
+    else:
+        network.mark_output(output)
     engine = builder.build_engine(
         network, config)                              #
     if engine == None:

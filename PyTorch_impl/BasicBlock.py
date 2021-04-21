@@ -66,6 +66,7 @@ if __name__ == '__main__':
     w = 5
     batch_size = 2
     m = BasicBlock(input_channel, output_channel) # Pytorch构建的模型
+    m.eval()
 
     logger = trt.Logger(trt.Logger.INFO)
     builder                     = trt.Builder(logger)

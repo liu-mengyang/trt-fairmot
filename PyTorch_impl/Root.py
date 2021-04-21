@@ -23,7 +23,6 @@ class Root(nn.Module):
         if self.residual:
             x += children[0]
         x = self.relu(x)
-
         return x
 
     def TRT_export(self, constructor: TRT_Constructor, *x):
@@ -51,6 +50,7 @@ if __name__ == '__main__':
     w = 5
     batch_size = 2
     m = Root(input_channel, output_channel, kernel_size=1, residual=False) # Pytorch构建的模型
+    m.eval()
 
     logger = trt.Logger(trt.Logger.INFO)
     builder                     = trt.Builder(logger)
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     stream          = cuda.Stream()
 
-    data        = np.arange(2*input_channel*h*w,dtype=np.float32).reshape(batch_size,input_channel,h,w)*100+100
+    data        = np.arange(2*input_channel*h*w,dtype=np.float32).reshape(batch_size,input_channel,h,w)*10+10
     # data        = np.random.randn(batch_size,input_channel,h,w)*10+40
     inputH0     = np.ascontiguousarray(data.reshape(-1))
     inputD0     = cuda.mem_alloc(inputH0.nbytes)

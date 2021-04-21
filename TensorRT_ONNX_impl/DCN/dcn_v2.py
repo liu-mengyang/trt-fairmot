@@ -218,8 +218,9 @@ class DCN(DCNv2):
 
     def forward(self, input):
         out = self.conv_offset_mask(input)
-        o1, o2, mask = torch.chunk(out, 3, dim=1)
-        offset = torch.cat((o1, o2), dim=1)
+        # o1, o2, mask = torch.chunk(out, 3, dim=1)
+        # offset = torch.cat((o1, o2), dim=1)
+        offset, mask = torch.split(out, [18, 9], dim=1)
         mask = torch.sigmoid(mask)
         return dcn_v2_conv(
             input,
@@ -418,8 +419,9 @@ class DCNPooling(DCNv2Pooling):
             # build mask and offset
             offset_mask = self.offset_mask_fc(roi.view(n, -1))
             offset_mask = offset_mask.view(n, 3, self.pooled_size, self.pooled_size)
-            o1, o2, mask = torch.chunk(offset_mask, 3, dim=1)
-            offset = torch.cat((o1, o2), dim=1)
+            # o1, o2, mask = torch.chunk(offset_mask, 3, dim=1)
+            # offset = torch.cat((o1, o2), dim=1)
+            offset, mask = torch.split(offset_mask, [18, 9], dim=1)
             mask = torch.sigmoid(mask)
 
             # do pooling with offset and mask

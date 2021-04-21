@@ -43,7 +43,7 @@ class TRT_Constructor:
             input=x,
             num_output_maps=conv.out_channels,
             kernel_shape=conv.kernel_size,
-            kernel=conv.weight.cpu().detach().numpy(),
+            kernel=conv.weight.detach().numpy(),
             bias=conv.bias.detach().numpy() if conv.bias is not None else None
         )
         y.stride = conv.stride

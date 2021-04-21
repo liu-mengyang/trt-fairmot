@@ -57,11 +57,11 @@ class _DCNv2(Function):
         ctx.kernel_size = _pair(weight.shape[2:4])
         ctx.deformable_groups = deformable_groups
         output = _backend.dcn_v2_forward(
-            input,
-            weight,
-            bias,
-            offset,
-            mask,
+            input.cuda(),
+            weight.cuda(),
+            bias.cuda(),
+            offset.cuda(),
+            mask.cuda(),
             ctx.kernel_size[0],
             ctx.kernel_size[1],
             ctx.stride[0],
@@ -239,7 +239,7 @@ class DCN(DCNv2):
         mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
         mask = constructor.Sigmoid(mask)
         print(mask.shape)
-        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.cpu().detach().numpy())
+        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.detach().numpy())
         print(weight.shape)
         bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.detach().numpy())
         print(bias.shape)

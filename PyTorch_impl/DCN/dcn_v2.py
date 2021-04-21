@@ -1,6 +1,7 @@
 import os
 import glob
 import math
+import numpy as np
 import torch
 from torch import nn
 from torch.autograd import Function
@@ -8,6 +9,9 @@ from torch.nn.modules.utils import _pair
 from torch.autograd.function import once_differentiable
 from torch.utils.cpp_extension import load
 
+import sys
+sys.path.append("..")
+from TRT_Constructor import TRT_Constructor
 
 filename = "dcn_v2_cuda.cpp" if torch.cuda.is_available() else "dcn_v2.cpp"
 
@@ -225,6 +229,23 @@ class DCN(DCNv2):
             self.dilation,
             self.deformable_groups,
         )
+
+    def TRT_export(self, constructor: TRT_Constructor, x):
+        out = constructor.Conv2d(self.conv_offset_mask, x)
+        # o1, o2, mask = torch.chunk(out, 3, dim=1)
+        # offset = torch.cat((o1, o2), dim=1)
+        offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
+        print(offset.shape)
+        mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
+        mask = constructor.Sigmoid(mask)
+        print(mask.shape)
+        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.cpu().detach().numpy())
+        print(weight.shape)
+        bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.detach().numpy())
+        print(bias.shape)
+        out = constructor.DCNv2(x, self.out_channels, offset, mask, weight, bias)
+        print(out.shape)
+        return out
 
 
 class _DCNv2Pooling(Function):
@@ -446,3 +467,13 @@ class DCNPooling(DCNv2Pooling):
             self.sample_per_part,
             self.trans_std,
         )
+
+if __name__ == '__main__':
+    # 以下为TensorRT对比测试代码
+    from test_dcn import test_fun, input_channel, output_channel
+    m = DCN(input_channel,
+        output_channel,
+        3,
+        1,
+        1,) # Pytorch构建的模型
+    test_fun(m)

@@ -128,7 +128,7 @@ class DeformConv(nn.Module):
     def forward(self, x):
         # print(x)
         x = self.conv(x)
-        # print(torch.mean(x))
+        print(torch.mean(x))
         x = self.actf(x)
         return x
 

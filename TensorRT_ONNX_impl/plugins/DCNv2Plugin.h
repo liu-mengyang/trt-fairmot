@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <assert.h>
 // #include "dcn_v2_im2col_cuda.h"
 
 // using namespace std;
@@ -12,6 +13,7 @@ public:
 
     DCNv2Plugin(int output_channel) {
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libtorch_cuda.so", RTLD_LAZY);
+        dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libc10_cuda.so", RTLD_LAZY);
         m.out_channel = output_channel;
     }
 
@@ -32,7 +34,16 @@ public:
     }
 
     bool supportsFormatCombination(int pos, const nvinfer1::PluginTensorDesc* inOut, int nbInput, int nbOutputs) override {
-        return inOut[pos].type == nvinfer1::DataType::kFLOAT && inOut[pos].format == nvinfer1::TensorFormat::kLINEAR;
+        // assert(0 <= pos && pos < 2);
+        const auto *in = inOut;
+        const auto *out = inOut + nbInput;
+        if (pos == nbInput) {
+            return out[0].type == in[0].type &&
+                    out[0].format == nvinfer1::TensorFormat::kLINEAR;
+        } else {
+            return in[0].type == nvinfer1::DataType::kFLOAT &&
+                    in[0].format == nvinfer1::TensorFormat::kLINEAR;
+        }
     }
 
     int getNbOutputs() const override {
@@ -56,6 +67,7 @@ public:
     }
     
     virtual void configurePlugin(const nvinfer1::DynamicPluginTensorDesc* in, int nbInput, const nvinfer1::DynamicPluginTensorDesc* out, int nbOutput) override {
+        std::cout << "configurePlugin type=" << (int)out[0].desc.type << std::endl;
     }
 
     size_t getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int32_t nbInputs, const nvinfer1::PluginTensorDesc *outputs, int32_t nbOutputs) const override {return 0;}

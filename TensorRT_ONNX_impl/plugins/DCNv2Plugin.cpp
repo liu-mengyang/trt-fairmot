@@ -34,7 +34,6 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     const int channels_in = inputDim.d[1];
     const int height_in = inputDim.d[2];
     const int width_in = inputDim.d[3];
-
     const int kernel_h = 3;
     const int kernel_w = 3;
     const int stride_h = 1;
@@ -48,6 +47,9 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     const int channels_out = outputDim.d[1];
     const int height_out = outputDim.d[2];
     const int width_out = outputDim.d[3];
+
+    // std::cout << "input shape: (" << channels_in << "," << height_in << "," << width_in << ")" << std::endl;
+    // std::cout << "output shape: (" << channels_out << "," << height_out << "," << width_out << ")" << std::endl;
     
     at::Tensor input = at::from_blob(const_cast<void *>(inputs[0]), {1, channels_in, height_in, width_in}, options);
     at::Tensor offset = at::from_blob(const_cast<void *>(inputs[1]), {1, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
@@ -56,9 +58,12 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     at::Tensor bias = at::from_blob(const_cast<void *>(inputs[4]), {channels_out}, options);
     at::Tensor output = at::from_blob(const_cast<void *>(outputs[0]), {1, channels_out, height_out, width_out}, options);
 
+    // std::cout << input << std::endl;
+
     output = dcn_v2_cuda_forward(input, weight, bias, offset, mask, 
                                  kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w,
                                  dilation_h, dilation_w, deformable_group);
+    std::cout << at::mean(output) << std::endl;
     return 0;
 }
 

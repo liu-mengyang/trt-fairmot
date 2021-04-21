@@ -1,8 +1,19 @@
+import torch
 from torch import nn
 import tensorrt as trt
 import numpy as np
 from typing import List
-from DCN.dcn_v2 import DCN
+import ctypes
+
+ctypes.cdll.LoadLibrary('./DCNv2Plugin.so')
+
+def get_plugin_creator(plugin_name):
+    plugin_creator_list = trt.get_plugin_registry().plugin_creator_list
+    plugin_creator = None
+    for c in plugin_creator_list:
+        if c.name == plugin_name:
+            plugin_creator = c
+    return plugin_creator
 
 class TRT_Constructor:
     def __init__(self, network: trt.tensorrt.INetworkDefinition):
@@ -24,7 +35,7 @@ class TRT_Constructor:
             input=x,
             num_output_maps=conv.out_channels,
             kernel_shape=conv.kernel_size,
-            kernel=conv.weight.detach().numpy(),
+            kernel=conv.weight.cpu().detach().numpy(),
             bias=conv.bias.detach().numpy() if conv.bias is not None else None
         )
         y.stride = conv.stride
@@ -52,6 +63,10 @@ class TRT_Constructor:
         y = self.network.add_activation(x, trt.ActivationType.RELU)
         return y.get_output(0)
 
+    def Sigmoid(self, x: trt.tensorrt.ITensor):
+        y = self.network.add_activation(x, trt.ActivationType.SIGMOID)
+        return y.get_output(0)
+
     def Elementwise(self, a: trt.tensorrt.ITensor, b: trt.tensorrt.ITensor, op: trt.tensorrt.ElementWiseOperation):
         y = self.network.add_elementwise(a, b, op)
         return y.get_output(0)
@@ -63,5 +78,21 @@ class TRT_Constructor:
         y = self.network.add_concatenation(i)
         return y.get_output(0)
 
-    def DCN(self, dcn: DCN, x: trt.tensorrt.ITensor):
-        pass
+    def Slice(self, x: trt.tensorrt.ITensor, start: trt.tensorrt.Dims, shape: trt.tensorrt.Dims, stride: trt.tensorrt.Dims):
+        y = self.network.add_slice(x, start, shape, stride)
+        return y.get_output(0)
+
+    def Constant(self, shape: trt.tensorrt.Dims, weights: trt.tensorrt.Weights):
+        y = self.network.add_constant(shape, weights)
+        return y.get_output(0)
+
+    def DCNv2(self, x: trt.tensorrt.ITensor, out_channels, offset: trt.tensorrt.ITensor, mask: trt.tensorrt.ITensor, weight: trt.tensorrt.ITensor, bias: trt.tensorrt.ITensor):
+        plugin_creator = get_plugin_creator('DCNv2Plugin')
+        if plugin_creator == None:
+            print('Plugin DCNv2Plugin not found. Exiting')
+            exit()
+        fc = trt.PluginFieldCollection()
+        fc.append(trt.PluginField("out_channel", np.array([out_channels], np.int32)))
+        y = self.network.add_plugin_v2([x, offset, mask, weight, bias], 
+            plugin_creator.create_plugin('DCNv2Plugin', fc))
+        return y.get_output(0)

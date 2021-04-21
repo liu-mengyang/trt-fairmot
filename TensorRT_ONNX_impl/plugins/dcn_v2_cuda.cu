@@ -50,8 +50,6 @@ dcn_v2_cuda_forward(const at::Tensor &input,
     const int channels_kernel = weight.size(1);
     const int kernel_h_ = weight.size(2);
     const int kernel_w_ = weight.size(3);
-    const int dilation_h = 1;
-    const int dilation_w = 1;
 
     // printf("Kernels: %d %d %d %d\n", kernel_h_, kernel_w_, kernel_w, kernel_h);
     // printf("Channels: %d %d\n", channels, channels_kernel);
@@ -92,7 +90,8 @@ dcn_v2_cuda_forward(const at::Tensor &input,
     auto weight_flat = weight.view({channels_out, channels * kernel_h * kernel_w});
     auto product = at::matmul(weight_flat, columns);
     output = at::add(output, product.view({batch, channels_out, height_out, width_out}));
-    return 0;
+
+    return output;
 }
 
 std::vector<at::Tensor> dcn_v2_cuda_backward(const at::Tensor &input,

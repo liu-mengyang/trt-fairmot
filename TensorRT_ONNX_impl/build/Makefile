@@ -22,7 +22,7 @@ all: $(BIN) $(SO)
 
 AppBasic: $(addprefix $(OBJ_DIR)/, AppBasic.o)
 
-DCNv2Plugin.so: $(addprefix $(OBJ_DIR)/, DCNv2Plugin.o dcn_v2_im2col_cuda.o)
+DCNv2Plugin.so: $(addprefix $(OBJ_DIR)/, DCNv2Plugin.o dcn_v2_cuda.o dcn_v2_im2col_cuda.o)
 
 -include $(DEP)
 

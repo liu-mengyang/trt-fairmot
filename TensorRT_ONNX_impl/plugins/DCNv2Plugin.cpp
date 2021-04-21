@@ -7,13 +7,30 @@
 // #include <THC/THCAtomics.cuh> 
 // #include <THC/THCDeviceUtils.cuh>
 
-int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc, const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) {
-    using scalar_t = float;
-    auto options = at::TensorOptions().device(c10::kCUDA).dtype(c10::kFloat);
+at::Tensor
+dcn_v2_cuda_forward(const at::Tensor &input,
+                    const at::Tensor &weight,
+                    const at::Tensor &bias,
+                    const at::Tensor &offset,
+                    const at::Tensor &mask,
+                    const int kernel_h,
+                    const int kernel_w,
+                    const int stride_h,
+                    const int stride_w,
+                    const int pad_h,
+                    const int pad_w,
+                    const int dilation_h,
+                    const int dilation_w,
+                    const int deformable_group);
+
+int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
+                         const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) 
+{
+    auto options = at::TensorOptions().device(at::kCUDA).dtype(at::kFloat);
     nvinfer1::Dims inputDim = inputDesc[0].dims;
     nvinfer1::Dims outputDim = outputDesc[0].dims;
     
-    const int batch = inputDim.d[0];
+    // const int batch = inputDim.d[0];
     const int channels_in = inputDim.d[1];
     const int height_in = inputDim.d[2];
     const int width_in = inputDim.d[3];
@@ -31,8 +48,6 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     const int channels_out = outputDim.d[1];
     const int height_out = outputDim.d[2];
     const int width_out = outputDim.d[3];
-    // const int height_out = (height_in + 2 * pad_h - (dilation_h * (kernel_h - 1) + 1)) / stride_h + 1;
-    // const int width_out = (width_in + 2 * pad_w - (dilation_w * (kernel_w - 1) + 1)) / stride_w + 1;
     
     at::Tensor input = at::from_blob(const_cast<void *>(inputs[0]), {1, channels_in, height_in, width_in}, options);
     at::Tensor offset = at::from_blob(const_cast<void *>(inputs[1]), {1, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
@@ -41,40 +56,9 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     at::Tensor bias = at::from_blob(const_cast<void *>(inputs[4]), {channels_out}, options);
     at::Tensor output = at::from_blob(const_cast<void *>(outputs[0]), {1, channels_out, height_out, width_out}, options);
 
-    // std::cout << input << std::endl;
-    // std::cout << offset.size(0) << " " << offset.size(1) << " " << offset.size(2) << " " << offset.size(3) << std::endl;
-
-    at::Tensor ones = at::ones({batch, channels_out, height_out, width_out}, options);
-    at::Tensor columns = at::empty({batch, channels_in * kernel_h * kernel_w, 1 * height_out * width_out}, options);
-    output = output.view({batch, channels_out, height_out, width_out}).zero_();
-
-    // Add biases to output tensor
-    // torch implementation
-    auto ones_T = at::transpose(ones.contiguous(), 3, 1);
-    ones_T = at::mul(ones_T, bias.contiguous());
-    ones_T = at::transpose(ones_T, 3, 1);
-    output = at::add(output, ones_T);
-
-    modulated_deformable_im2col_cuda(stream,
-                                 input.data_ptr<scalar_t>(),
-                                 offset.data_ptr<scalar_t>(),
-                                 mask.data_ptr<scalar_t>(),
-                                 batch, channels_in, height_in, width_in,
-                                 height_out, width_out, kernel_h, kernel_w,
-                                 pad_h, pad_w, stride_h, stride_w, dilation_h, dilation_w,
-                                 deformable_group,
-                                 columns.data_ptr<scalar_t>());
-    
-
-    // Scale columns and add to output
-    // torch implementation
-    auto weight_flat = weight.view({channels_out, channels_in * kernel_h * kernel_w});
-    auto product = at::matmul(weight_flat, columns);
-    output = at::add(output, product.view({batch, channels_out, height_out, width_out}));
-
-    // std::cout << at::mean(output) << std::endl;
-    // std::cout << output << std::endl;
-
+    output = dcn_v2_cuda_forward(input, weight, bias, offset, mask, 
+                                 kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w,
+                                 dilation_h, dilation_w, deformable_group);
     return 0;
 }
 

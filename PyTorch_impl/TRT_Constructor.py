@@ -2,6 +2,7 @@ from torch import nn
 import tensorrt as trt
 import numpy as np
 from typing import List
+from DCN.dcn_v2 import DCN
 
 class TRT_Constructor:
     def __init__(self, network: trt.tensorrt.INetworkDefinition):
@@ -61,3 +62,6 @@ class TRT_Constructor:
     def Concat(self, i: List[trt.tensorrt.ITensor]):
         y = self.network.add_concatenation(i)
         return y.get_output(0)
+
+    def DCN(self, dcn: DCN, x: trt.tensorrt.ITensor):
+        pass

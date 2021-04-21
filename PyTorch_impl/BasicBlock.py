@@ -1,9 +1,3 @@
-import os
-import numpy as np
-import tensorrt as trt
-import pycuda.autoinit
-import pycuda.driver as cuda
-import torch
 from torch import nn
 
 from Config import BN_MOMENTUM
@@ -57,6 +51,12 @@ class BasicBlock(nn.Module):
         return out
 
 if __name__ == '__main__':
+    import os
+    import numpy as np
+    import tensorrt as trt
+    import pycuda.autoinit
+    import pycuda.driver as cuda
+    import torch
 
     # 以下为TensorRT对比测试代码
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     stream          = cuda.Stream()
 
-    data        = np.arange(2*input_channel*h*w,dtype=np.float32).reshape(batch_size,input_channel,h,w)*10+10
+    data        = np.arange(2*input_channel*h*w,dtype=np.float32).reshape(batch_size,input_channel,h,w)*100+100
     # data        = np.random.randn(batch_size,input_channel,h,w)*10+40
     inputH0     = np.ascontiguousarray(data.reshape(-1))
     inputD0     = cuda.mem_alloc(inputH0.nbytes)

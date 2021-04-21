@@ -81,5 +81,5 @@ class Tree(nn.Module):
             x = self.root.TRT_export(constructor, x2, x1, *children)
         else:
             children.append(x1)
-            x = self.tree2.TRT_export(x1, children=children)
+            x = self.tree2.TRT_export(constructor, x1, children=children)
         return x

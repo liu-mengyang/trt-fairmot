@@ -1,7 +1,7 @@
 from torch import nn
 import tensorrt as trt
 import numpy as np
-
+from typing import List
 
 class TRT_Constructor:
     def __init__(self, network: trt.tensorrt.INetworkDefinition):
@@ -57,3 +57,7 @@ class TRT_Constructor:
 
     def Add(self, a: trt.tensorrt.ITensor, b: trt.tensorrt.ITensor):
         return self.Elementwise(a, b, trt.tensorrt.ElementWiseOperation.SUM)
+
+    def Concat(self, i: List[trt.tensorrt.ITensor]):
+        y = self.network.add_concatenation(i)
+        return y.get_output(0)

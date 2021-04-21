@@ -4,7 +4,11 @@ from Config import BN_MOMENTUM
 
 from Root import Root
 
+from TRT_Constructor import TRT_Constructor
+
 # Aggregation Tree
+
+
 class Tree(nn.Module):
     def __init__(self, levels, block, in_channels, out_channels, stride=1,
                  level_root=False, root_dim=0, root_kernel_size=1,
@@ -58,4 +62,24 @@ class Tree(nn.Module):
         else:
             children.append(x1)
             x = self.tree2(x1, children=children)
+        return x
+
+    def TRT_export(self, constructor: TRT_Constructor, x, residual=None, children=None):
+        children = [] if children is None else children
+        bottom = x
+        if self.downsample:
+            bottom = constructor.MaxPool2d(self.downsample, x)
+        if self.project:
+            residual = constructor.BatchNorm2d(
+                self.project[1], constructor.Conv2d(
+                    self.project[0], bottom))
+        if self.level_root:
+            children.append(bottom)
+        x1 = self.tree1.TRT_export(constructor, x, residual)
+        if self.levels == 1:
+            x2 = self.tree2.TRT_export(constructor, x1)
+            x = self.root.TRT_export(constructor, x2, x1, *children)
+        else:
+            children.append(x1)
+            x = self.tree2.TRT_export(x1, children=children)
         return x

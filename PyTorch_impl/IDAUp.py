@@ -40,6 +40,12 @@ class IDAUp(nn.Module):
         for i in range(startp + 1, endp):
             upsample = getattr(self, 'up_' + str(i - startp))
             project = getattr(self, 'proj_' + str(i - startp))
-            layers[i] = upsample(project(layers[i]))
             node = getattr(self, 'node_' + str(i - startp))
+            layers[i] = upsample(project(layers[i]))
             layers[i] = node(layers[i] + layers[i - 1])
+
+    def TRT_export(self, constructor: TRT_Constructor, layers, startp, endp):
+        for i in range(startp + 1, endp):
+            layers[i] = getattr(self, 'proj_{}'.format(i - startp)).TRT_export(constructor, layers[i])
+            layers[i] = constructor.DeConv2d(getattr(self, 'up_{}'.format(i - startp)), layers[i])
+            layers[i] = getattr(self, 'node_{}'.format(i - startp)).TRT_export(constructor, layers[i])

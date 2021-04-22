@@ -51,6 +51,20 @@ class TRT_Constructor:
         y.dilation = conv.dilation
         return y.get_output(0)
 
+    def DeConv2d(self, deconv: nn.ConvTranspose2d, x: trt.tensorrt.ITensor):
+        y = self.network.add_deconvolution(
+            input=x,
+            num_output_maps=deconv.out_channels,
+            kernel_shape=deconv.kernel_size,
+            kernel=deconv.weight.detach().numpy(),
+            bias=conv.bias.detach().numpy() if conv.bias is not None else None
+        )
+        y.stride = deconv.stride
+        y.padding = deconv.padding
+        y.dilation = deconv.dilation
+        y.num_groups = deconv.groups
+        return y.get_output(0)
+
     def BatchNorm2d(self, bn: nn.BatchNorm2d, x: trt.tensorrt.ITensor):
         eps = bn.eps
         gamma = bn.weight

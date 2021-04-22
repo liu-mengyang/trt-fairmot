@@ -232,8 +232,6 @@ class DCN(DCNv2):
 
     def TRT_export(self, constructor: TRT_Constructor, x):
         out = constructor.Conv2d(self.conv_offset_mask, x)
-        # o1, o2, mask = torch.chunk(out, 3, dim=1)
-        # offset = torch.cat((o1, o2), dim=1)
         offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
         print(offset.shape)
         mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))

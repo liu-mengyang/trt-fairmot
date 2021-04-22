@@ -5,7 +5,7 @@ import numpy as np
 from typing import List
 import ctypes
 
-ctypes.cdll.LoadLibrary('../build/DCNv2Plugin.so')
+ctypes.cdll.LoadLibrary('./build/DCNv2Plugin.so')
 
 def get_plugin_creator(plugin_name):
     plugin_creator_list = trt.get_plugin_registry().plugin_creator_list

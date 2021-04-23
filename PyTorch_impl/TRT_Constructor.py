@@ -57,11 +57,10 @@ class TRT_Constructor:
             num_output_maps=deconv.out_channels,
             kernel_shape=deconv.kernel_size,
             kernel=deconv.weight.detach().numpy(),
-            bias=conv.bias.detach().numpy() if conv.bias is not None else None
+            bias=deconv.bias.detach().numpy() if deconv.bias is not None else None
         )
         y.stride = deconv.stride
         y.padding = deconv.padding
-        y.dilation = deconv.dilation
         y.num_groups = deconv.groups
         return y.get_output(0)
 

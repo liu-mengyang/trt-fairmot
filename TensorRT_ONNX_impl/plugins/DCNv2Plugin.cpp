@@ -1,11 +1,7 @@
 #include "DCNv2Plugin.h"
-// #include <torch.h>
+#include <torch/script.h>
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
-
-// #include <THC/THC.h>
-// #include <THC/THCAtomics.cuh> 
-// #include <THC/THCDeviceUtils.cuh>
 
 at::Tensor
 dcn_v2_cuda_forward(const at::Tensor &input,
@@ -26,11 +22,10 @@ dcn_v2_cuda_forward(const at::Tensor &input,
 int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvinfer1::PluginTensorDesc *outputDesc,
                          const void *const *inputs, void *const *outputs, void *workspace, cudaStream_t stream) 
 {
-    auto options = at::TensorOptions().device(at::kCUDA).dtype(at::kFloat);
+    auto options = torch::TensorOptions().device(torch::kCUDA).dtype(torch::kFloat32);
     nvinfer1::Dims inputDim = inputDesc[0].dims;
     nvinfer1::Dims outputDim = outputDesc[0].dims;
     
-    // const int batch = inputDim.d[0];
     const int channels_in = inputDim.d[1];
     const int height_in = inputDim.d[2];
     const int width_in = inputDim.d[3];
@@ -48,22 +43,17 @@ int DCNv2Plugin::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const nvin
     const int height_out = outputDim.d[2];
     const int width_out = outputDim.d[3];
 
-    // std::cout << "input shape: (" << channels_in << "," << height_in << "," << width_in << ")" << std::endl;
-    // std::cout << "output shape: (" << channels_out << "," << height_out << "," << width_out << ")" << std::endl;
-    
-    at::Tensor input = at::from_blob(const_cast<void *>(inputs[0]), {1, channels_in, height_in, width_in}, options);
-    at::Tensor offset = at::from_blob(const_cast<void *>(inputs[1]), {1, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
-    at::Tensor mask = at::from_blob(const_cast<void *>(inputs[2]), {1, kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
-    at::Tensor weight = at::from_blob(const_cast<void *>(inputs[3]), {channels_out, channels_in, kernel_h, kernel_w}, options);
-    at::Tensor bias = at::from_blob(const_cast<void *>(inputs[4]), {channels_out}, options);
-    at::Tensor output = at::from_blob(const_cast<void *>(outputs[0]), {1, channels_out, height_out, width_out}, options);
+    at::Tensor input = torch::from_blob(const_cast<void *>(inputs[0]), {1, channels_in, height_in, width_in}, options);
+    at::Tensor offset = torch::from_blob(const_cast<void *>(inputs[1]), {1, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
+    at::Tensor mask = torch::from_blob(const_cast<void *>(inputs[2]), {1, kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
+    at::Tensor weight = torch::from_blob(const_cast<void *>(inputs[3]), {channels_out, channels_in, kernel_h, kernel_w}, options);
+    at::Tensor bias = torch::from_blob(const_cast<void *>(inputs[4]), {channels_out}, options);
+    at::Tensor output = torch::from_blob(outputs[0], {1, channels_out, height_out, width_out}, options);
 
-    // std::cout << input << std::endl;
-
-    output = dcn_v2_cuda_forward(input, weight, bias, offset, mask, 
+    at::Tensor result = dcn_v2_cuda_forward(input, weight, bias, offset, mask, 
                                  kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w,
                                  dilation_h, dilation_w, deformable_group);
-    std::cout << at::mean(output) << std::endl;
+    output[0] = result.reshape({channels_out, height_out, width_out});
     return 0;
 }
 

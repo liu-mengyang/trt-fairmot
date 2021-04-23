@@ -4,9 +4,6 @@
 #include <vector>
 #include <cstring>
 #include <assert.h>
-// #include "dcn_v2_im2col_cuda.h"
-
-// using namespace std;
 
 class DCNv2Plugin: public nvinfer1::IPluginV2DynamicExt {
 public:

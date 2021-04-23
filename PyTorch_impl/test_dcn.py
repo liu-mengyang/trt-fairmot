@@ -8,11 +8,13 @@ from torch import nn
 
 from TRT_Constructor import TRT_Constructor
 
+np.seterr(divide='ignore',invalid='ignore')
+
 # 用于测试的函数
-input_channel = 2
-output_channel = 2
-h = 50
-w = 50
+input_channel = 32
+output_channel = 64
+h = 64
+w = 64
 
 def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m.TRT_export方法
     batch_size = 1
@@ -72,11 +74,11 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     outputH0_torch = m(torch.tensor(data))
     print("outputH0 in Pytorch:", outputH0_torch.shape)
     print(outputH0_torch)
-    print(outputH0_torch.cpu().detach().numpy())
 
-    diff = outputH0_torch.cpu().detach().numpy()-outputH0
+    diff = outputH0_torch.detach().numpy()-outputH0
     print("Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("Average relative difference between Pytorch and TRT:",
-          np.mean(np.abs(diff/outputH0)))
+          np.nansum(np.abs(diff/outputH0_torch.cpu().detach().numpy())) / np.size(diff)
+          )
     print(diff)

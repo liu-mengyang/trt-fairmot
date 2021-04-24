@@ -20,7 +20,7 @@ def fill_up_weights(up):
 # Iterative Deep Aggregation Upsample
 class IDAUp(nn.Module):
 
-    def __init__(self, o, channels, up_f, test=True):
+    def __init__(self, o, channels, up_f, test=False):
         super(IDAUp, self).__init__()
         self.test = test
         for i in range(1, len(channels)):

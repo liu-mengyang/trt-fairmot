@@ -78,32 +78,36 @@ class DLASeg(nn.Module):
         y = []
         for i in range(self.last_level - self.first_level):
             y.append(x[i].clone())
-        self.ida_up(y, 0, len(y))
+        backbone_result = self.ida_up(y, 0, len(y))
 
-        z = {}
+        z = []
         for head in self.heads:
-            z[head] = self.__getattr__(head)(y[-1])
-        return [z]
+            z.append(self.__getattr__(head)(backbone_result))
+        return z
 
-    # def TRT_export(self, constructor: TRT_Constructor, x):
-    #     x = self.base.TRT_export(constructor, x)
-    #     x = self.dla_up.TRT_export(constructor, x)
-    #     y = []
-    #     for i in range(self.last_level - self.first_level):
-    #         # x2 = constructor.Slice(x[i], (0, 0, 0, 0), (1, x[i].shape[1],x[i].shape[2],x[i].shape[3]), (1, 1, 1, 1))
-    #         x2 = x[i]
-    #         y.append(x2)
-    #     self.ida_up.TRT_export(constructor, y, 0, len(y))
+    def TRT_export(self, constructor: TRT_Constructor, x):
+        x = self.base.TRT_export(constructor, x)
+        x2 = self.dla_up.TRT_export(constructor, x[2:])
+        y = []
+        for i in range(self.last_level - self.first_level):
+            y.append(x2[i])
+        backbone_result = self.ida_up.TRT_export(constructor, y, 0, len(y))
 
-        # z = {}
-        # for head in self.heads:
-        #     z[head] = self.__getattr__(head)(y[-1])
-        # return [z]
-        return y[-1]
+        z = []
+        for head in self.heads:
+            z_pare = _TRT_make_head(constructor, self.__getattr__(head), backbone_result)
+            z.append(z_pare)
+        return z
+
+def _TRT_make_head(constructor: TRT_Constructor, head, x):
+    x = constructor.Conv2d(head[0], x)
+    x = constructor.ReLU(head[1], x)
+    x = constructor.Conv2d(head[2], x)
+    return x
 
 if __name__ == '__main__':
     # 以下为TensorRT对比测试代码
-    from test_dla import test_fun
+    from test_dlaseg import test_fun
     heads = {'hm': 1,
         'wh': 4,
         'id': 128}

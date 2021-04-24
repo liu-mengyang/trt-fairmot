@@ -66,11 +66,11 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     stream = cuda.Stream()
 
     data1 = np.arange(1*channels[0]*int(h/4)*int(w/4),
-                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))/channels[0]/10+10
+                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))/channels[0]/255+10
     data2 = np.arange(1*channels[1]*int(h/8)*int(w/8),
-                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]/10+10
+                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]/255+10
     data3 = np.arange(1*channels[2]*int(h/16)*int(w/16),
-                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]/10+10
+                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]/255+10
     inputH0 = np.ascontiguousarray(data1.reshape(-1))
     inputD0 = cuda.mem_alloc(inputH0.nbytes)
     inputH1 = np.ascontiguousarray(data2.reshape(-1))

@@ -3,22 +3,16 @@ import torch
 from DLASeg import DLASeg
 
 # Build model
-def get_pose_net(num_layers, heads, head_conv=256, down_ratio=4):
-      model = DLASeg('dla{}'.format(num_layers), heads,
-                     pretrained=True,
-                     down_ratio=down_ratio,
-                     final_kernel=1,
-                     last_level=5,
-                     head_conv=head_conv)
-      return model
-
 def build_fairmot():
     heads = {'hm': 1,
         'wh': 4,
         'id': 128}
-    head_conv = 256
-    num_layers = 34
-    net = get_pose_net(num_layers=num_layers, heads=heads, head_conv=head_conv)
+    net = DLASeg(heads,
+                     pretrained=True,
+                     down_ratio=4,
+                     final_kernel=1,
+                     last_level=5,
+                     head_conv=256)
     return net
 
 # load model

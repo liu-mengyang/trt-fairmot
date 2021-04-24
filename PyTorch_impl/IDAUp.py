@@ -38,9 +38,8 @@ class IDAUp(nn.Module):
     def TRT_export(self, constructor: TRT_Constructor, layers, startp, endp):
         for i in range(startp + 1, endp):
             layers[i] = getattr(self, 'ida_pare_{}'.format(i - startp)).TRT_export(constructor, layers[i], layers[i-1])
-        y = layers[-1]
+            y = layers[i]
         return y
-        # return layers
 
 if __name__ == '__main__':
     # 以下为TensorRT对比测试代码

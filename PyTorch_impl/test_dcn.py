@@ -79,6 +79,6 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     print("Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("Average relative difference between Pytorch and TRT:",
-          np.nansum(np.abs(diff/outputH0_torch.cpu().detach().numpy())) / np.size(diff)
+          np.nansum(np.abs(diff/outputH0_torch.detach().numpy())) / np.size(diff)
           )
     print(diff)

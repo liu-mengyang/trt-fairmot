@@ -66,11 +66,11 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     stream = cuda.Stream()
 
     data1 = np.arange(1*channels[0]*int(h/4)*int(w/4),
-                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))*10+10
+                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))/channels[0]/10+10
     data2 = np.arange(1*channels[1]*int(h/8)*int(w/8),
-                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))*10+10
+                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]/10+10
     data3 = np.arange(1*channels[2]*int(h/16)*int(w/16),
-                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))*10+10
+                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]/10+10
     inputH0 = np.ascontiguousarray(data1.reshape(-1))
     inputD0 = cuda.mem_alloc(inputH0.nbytes)
     inputH1 = np.ascontiguousarray(data2.reshape(-1))
@@ -92,17 +92,17 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
 
     print("inputH0:", data1.shape, engine.get_binding_dtype(0))
     print(data1)
-    print("outputH0:", outputH0.shape, engine.get_binding_dtype(1))
+    print("outputH0:", outputH0.shape, engine.get_binding_dtype(3))
     print(outputH0)
 
     outputH0_torch = m([torch.tensor(data1),torch.tensor(data2),torch.tensor(data3)], 0, 3)
     print("outputH0 in Pytorch:", outputH0_torch.shape)
     print(outputH0_torch)
 
-    diff = outputH0_torch.cpu().detach().numpy()-outputH0
+    diff = outputH0_torch.detach().numpy()-outputH0
     print("Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("Average relative difference between Pytorch and TRT:",
-          np.nansum(np.abs(diff/outputH0_torch.cpu().detach().numpy())) / np.size(diff)
+          np.nansum(np.abs(diff/outputH0_torch.detach().numpy())) / np.size(diff)
           )
     print(diff)

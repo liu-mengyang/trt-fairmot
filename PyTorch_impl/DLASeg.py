@@ -8,6 +8,8 @@ from IDAUp import IDAUp
 from DLAUp import DLAUp
 from TRT_Constructor import TRT_Constructor
 
+from TRT_Constructor import TRT_Constructor
+
 # DLA-34
 def dla34(pretrained=True, **kwargs):  # DLA-34
     model = DLA([1, 1, 1, 2, 2, 1],
@@ -82,17 +84,16 @@ class DLASeg(nn.Module):
         for head in self.heads:
             z[head] = self.__getattr__(head)(y[-1])
         return [z]
-        return y[-1]
 
-    def TRT_export(self, constructor: TRT_Constructor, x):
-        x = self.base.TRT_export(constructor, x)
-        x = self.dla_up.TRT_export(constructor, x)
-        y = []
-        for i in range(self.last_level - self.first_level):
-            # x2 = constructor.Slice(x[i], (0, 0, 0, 0), (1, x[i].shape[1],x[i].shape[2],x[i].shape[3]), (1, 1, 1, 1))
-            x2 = x[i]
-            y.append(x2)
-        self.ida_up.TRT_export(constructor, y, 0, len(y))
+    # def TRT_export(self, constructor: TRT_Constructor, x):
+    #     x = self.base.TRT_export(constructor, x)
+    #     x = self.dla_up.TRT_export(constructor, x)
+    #     y = []
+    #     for i in range(self.last_level - self.first_level):
+    #         # x2 = constructor.Slice(x[i], (0, 0, 0, 0), (1, x[i].shape[1],x[i].shape[2],x[i].shape[3]), (1, 1, 1, 1))
+    #         x2 = x[i]
+    #         y.append(x2)
+    #     self.ida_up.TRT_export(constructor, y, 0, len(y))
 
         # z = {}
         # for head in self.heads:

@@ -8,16 +8,16 @@ from torch import nn
 
 from TRT_Constructor import TRT_Constructor
 
-# 用于测试的函数
-input_channel = 2
-output_channel = 2
-h = 5
-w = 5
+np.seterr(divide='ignore',invalid='ignore')
 
+# 用于测试的函数
+input_channel = 3
+output_channel = 256
+h = 608
+w = 1088
 
 def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m.TRT_export方法
-
-    batch_size = 2
+    batch_size = 1
     m.eval()
 
     logger = trt.Logger(trt.Logger.INFO)
@@ -30,19 +30,15 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     config.flags = 0                                             #
 
     inputT0 = network.add_input(
-        'inputT0', trt.DataType.FLOAT, (-1, input_channel, -1, -1))
-    profile.set_shape(inputT0.name, (1, input_channel, 1, 1),
-                      (10, input_channel, 10, 10), (100, input_channel, 100, 100))
+        'inputT0', trt.DataType.FLOAT, (-1, input_channel, h, w))
+    profile.set_shape(inputT0.name, (1, input_channel, h, w),
+                      (10, input_channel, h, w), (100, input_channel, h, w))
     config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network)
     output = m.TRT_export(constructor, inputT0)
 
-    if type(output) is list:
-        for o in output:
-            network.mark_output(o)
-    else:
-        network.mark_output(output)
+    network.mark_output(output)
     engine = builder.build_engine(
         network, config)                              #
     if engine == None:
@@ -50,15 +46,13 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
 
     context = engine.create_execution_context()
     context.set_binding_shape(0, (batch_size, input_channel, h, w))
-    print("Bind0->", engine.get_binding_shape(0),
-          context.get_binding_shape(0))  # 这里是
+    print("Bind0->", engine.get_binding_shape(0), context.get_binding_shape(0))  # 这里是
     print("Bind1->", engine.get_binding_shape(1), context.get_binding_shape(1))
 
     stream = cuda.Stream()
 
-    data = np.arange(2*input_channel*h*w,
-                     dtype=np.float32).reshape(batch_size, input_channel, h, w)*10+10
-    # data        = np.random.randn(batch_size,input_channel,h,w)*10+40
+    data = np.arange(1*input_channel*h*w,
+                     dtype=np.float32).reshape(batch_size, input_channel, h, w)/input_channel+10
     inputH0 = np.ascontiguousarray(data.reshape(-1))
     inputD0 = cuda.mem_alloc(inputH0.nbytes)
     outputH0 = np.empty(context.get_binding_shape(
@@ -66,8 +60,9 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     outputD0 = cuda.mem_alloc(outputH0.nbytes)
 
     cuda.memcpy_htod_async(inputD0, inputH0, stream)
+    print("execute")
     context.execute_async_v2(
-        [int(inputD0), int(outputD0)], stream.handle)          #
+        [int(inputD0), int(outputD0)], stream.handle) 
     cuda.memcpy_dtoh_async(outputH0, outputD0, stream)
     stream.synchronize()
 
@@ -76,13 +71,14 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     print("outputH0:", outputH0.shape, engine.get_binding_dtype(1))
     print(outputH0)
 
-    outputH0_torch = m(torch.Tensor(data))
+    outputH0_torch = m(torch.tensor(data))
     print("outputH0 in Pytorch:", outputH0_torch.shape)
     print(outputH0_torch)
 
-    diff = outputH0_torch.detach().numpy()-outputH0
+    diff = outputH0_torch.cpu().detach().numpy()-outputH0
     print("Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("Average relative difference between Pytorch and TRT:",
-          np.mean(np.abs(diff/outputH0)))
+          np.nansum(np.abs(diff/outputH0_torch.cpu().detach().numpy())) / np.size(diff)
+          )
     print(diff)

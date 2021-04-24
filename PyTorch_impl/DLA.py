@@ -115,7 +115,7 @@ def _TRT_make_conv_level(constructor: TRT_Constructor, conv_level, x):
 
 if __name__ == '__main__':
     # 以下为TensorRT对比测试代码
-    from test_fun import test_fun
+    from test_fun import test_dla
     m = DLA([1, 1, 1, 2, 2, 1],
             [16, 32, 64, 128, 256, 512])  # Pytorch构建的模型
     test_fun(m)

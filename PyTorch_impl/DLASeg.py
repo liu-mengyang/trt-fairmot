@@ -1,10 +1,12 @@
 from torch import nn
 import numpy as np
+import copy
 
 from BasicBlock import BasicBlock
-from DLA import DLA
+from DLA import DLA, _TRT_make_conv_level
 from IDAUp import IDAUp
 from DLAUp import DLAUp
+from TRT_Constructor import TRT_Constructor
 
 # DLA-34
 def dla34(pretrained=True, **kwargs):  # DLA-34
@@ -24,21 +26,23 @@ def fill_fc_weights(layers):
 # Deep Layer Segmention
 class DLASeg(nn.Module):
     def __init__(self, base_name, heads, pretrained, down_ratio, final_kernel,
-                 last_level, head_conv, out_channel=0):
+                 last_level, head_conv, out_channel=0, test=False):
         super(DLASeg, self).__init__()
+        self.test = test
         assert down_ratio in [2, 4, 8, 16]
         self.first_level = int(np.log2(down_ratio))
         self.last_level = last_level
         self.base = globals()[base_name](pretrained=pretrained)
         channels = self.base.channels
         scales = [2 ** i for i in range(len(channels[self.first_level:]))]
-        self.dla_up = DLAUp(self.first_level, channels[self.first_level:], scales)
+        self.dla_up = DLAUp(self.first_level, channels[self.first_level:], scales, test=self.test)
 
         if out_channel == 0:
             out_channel = channels[self.first_level]
 
         self.ida_up = IDAUp(out_channel, channels[self.first_level:self.last_level], 
-                            [2 ** i for i in range(self.last_level - self.first_level)])
+                            [2 ** i for i in range(self.last_level - self.first_level)],
+                            test=self.test)
         
         self.heads = heads
         for head in self.heads:
@@ -78,3 +82,37 @@ class DLASeg(nn.Module):
         for head in self.heads:
             z[head] = self.__getattr__(head)(y[-1])
         return [z]
+        return y[-1]
+
+    def TRT_export(self, constructor: TRT_Constructor, x):
+        x = self.base.TRT_export(constructor, x)
+        x = self.dla_up.TRT_export(constructor, x)
+        y = []
+        for i in range(self.last_level - self.first_level):
+            # x2 = constructor.Slice(x[i], (0, 0, 0, 0), (1, x[i].shape[1],x[i].shape[2],x[i].shape[3]), (1, 1, 1, 1))
+            x2 = x[i]
+            y.append(x2)
+        self.ida_up.TRT_export(constructor, y, 0, len(y))
+
+        # z = {}
+        # for head in self.heads:
+        #     z[head] = self.__getattr__(head)(y[-1])
+        # return [z]
+        return y[-1]
+
+if __name__ == '__main__':
+    # 以下为TensorRT对比测试代码
+    from test_dla import test_fun
+    heads = {'hm': 1,
+        'wh': 4,
+        'id': 128}
+    down_ratio = 4
+    head_conv = 256
+    num_layers = 34
+    m = DLASeg('dla34', heads,
+                     pretrained=True,
+                     down_ratio=down_ratio,
+                     final_kernel=1,
+                     last_level=5,
+                     head_conv=head_conv, test=True) # Pytorch构建的模型
+    test_fun(m)

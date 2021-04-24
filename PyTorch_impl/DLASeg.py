@@ -6,6 +6,8 @@ from DLA import DLA
 from IDAUp import IDAUp
 from DLAUp import DLAUp
 
+from TRT_Constructor import TRT_Constructor
+
 # DLA-34
 def dla34(pretrained=True, **kwargs):  # DLA-34
     model = DLA([1, 1, 1, 2, 2, 1],
@@ -78,3 +80,6 @@ class DLASeg(nn.Module):
         for head in self.heads:
             z[head] = self.__getattr__(head)(y[-1])
         return [z]
+
+    def TRT_export(self, constructor: TRT_Constructor, x):
+        x = self.base

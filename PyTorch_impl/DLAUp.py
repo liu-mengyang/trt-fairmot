@@ -4,8 +4,6 @@ import numpy as np
 from IDAUp import IDAUp
 from TRT_Constructor import TRT_Constructor
 
-from TRT_Constructor import TRT_Constructor
-
 # Deep Layer Aggregation Upsample
 class DLAUp(nn.Module):
     def __init__(self, startp, channels, scales, in_channels=None, test=False):

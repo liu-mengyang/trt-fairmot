@@ -27,14 +27,14 @@ def fill_fc_weights(layers):
 
 # Deep Layer Segmention
 class DLASeg(nn.Module):
-    def __init__(self, base_name, heads, pretrained, down_ratio, final_kernel,
+    def __init__(self, heads, pretrained, down_ratio, final_kernel,
                  last_level, head_conv, out_channel=0, test=False):
         super(DLASeg, self).__init__()
         self.test = test
         assert down_ratio in [2, 4, 8, 16]
         self.first_level = int(np.log2(down_ratio))
         self.last_level = last_level
-        self.base = globals()[base_name](pretrained=pretrained)
+        self.base = dla34(pretrained=pretrained)
         channels = self.base.channels
         scales = [2 ** i for i in range(len(channels[self.first_level:]))]
         self.dla_up = DLAUp(self.first_level, channels[self.first_level:], scales, test=self.test)

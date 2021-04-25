@@ -114,7 +114,7 @@ if __name__ == '__main__':
     down_ratio = 4
     head_conv = 256
     num_layers = 34
-    m = DLASeg('dla34', heads,
+    m = DLASeg(heads,
                      pretrained=True,
                      down_ratio=down_ratio,
                      final_kernel=1,

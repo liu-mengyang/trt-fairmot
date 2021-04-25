@@ -20,27 +20,28 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     batch_size = 1
     m.eval()
 
-    logger = trt.Logger(trt.Logger.INFO)
+    logger = trt.Logger(trt.Logger.VERBOSE)
     builder = trt.Builder(logger)
     network = builder.create_network(
         1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))  #
     profile = builder.create_optimization_profile()         #
     config = builder.create_builder_config()               #
-    config.max_workspace_size = 1 << 30                                       #
+    config.max_workspace_size = 1 << 30                                      #
     config.flags = 0                                             #
 
     inputT0 = network.add_input(
-        'inputT0', trt.DataType.FLOAT, (-1, input_channel, h, w))
+        'inputT0', trt.DataType.FLOAT, (1, input_channel, h, w))
     profile.set_shape(inputT0.name, (1, input_channel, h, w),
-                      (10, input_channel, h, w), (100, input_channel, h, w))
+                      (1, input_channel, h, w), (1, input_channel, h, w))
     config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network)
     output = m.TRT_export(constructor, inputT0)
 
-    if type(output) is list:
-        for o in output:
-            network.mark_output(o)
+    
+    network.mark_output(output[0])
+    network.mark_output(output[1])
+    network.mark_output(output[2])
     engine = builder.build_engine(
         network, config)                              #
     if engine == None:
@@ -70,7 +71,7 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     outputD2 = cuda.mem_alloc(outputH2.nbytes)
 
     cuda.memcpy_htod_async(inputD0, inputH0, stream)
-    print("execute")
+    # print("execute")
     context.execute_async_v2(
         [int(inputD0), int(outputD0), int(outputD1), int(outputD2)], stream.handle) 
     cuda.memcpy_dtoh_async(outputH0, outputD0, stream)
@@ -97,12 +98,12 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     print("2 Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("2 Average relative difference between Pytorch and TRT:",
-          np.nansum(np.abs(diff/outputH0_torch[0].cpu().detach().numpy())) / np.size(diff)
+          np.nansum(np.abs(diff/outputH0_torch[1].cpu().detach().numpy())) / np.size(diff)
           )
     diff = outputH0_torch[2].cpu().detach().numpy()-outputH2
     print("3 Average absolute difference between Pytorch and TRT:",
           np.mean(np.abs(diff)))
     print("3 Average relative difference between Pytorch and TRT:",
-          np.nansum(np.abs(diff/outputH0_torch[0].cpu().detach().numpy())) / np.size(diff)
+          np.nansum(np.abs(diff/outputH0_torch[2].cpu().detach().numpy())) / np.size(diff)
           )
     # print(diff)

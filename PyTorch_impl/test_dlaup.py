@@ -22,7 +22,7 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     batch_size = 1
     m.eval()
 
-    logger = trt.Logger(trt.Logger.INFO)
+    logger = trt.Logger(trt.Logger.VERBOSE)
     builder = trt.Builder(logger)
     network = builder.create_network(
         1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))  #
@@ -45,17 +45,17 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
         'inputT5', trt.DataType.FLOAT, (-1, channels[5], int(h/32), int(w/32)))
 
     profile.set_shape(inputT0.name, (1, channels[0], int(h), int(w)),
-                      (10, channels[0], int(h), int(w)), (100, channels[0], int(h), int(w)))
+                      (1, channels[0], int(h), int(w)), (1, channels[0], int(h), int(w)))
     profile.set_shape(inputT1.name, (1, channels[1], int(h/2), int(w/2)),
-                      (10, channels[1], int(h/2), int(w/2)), (100, channels[1], int(h/2), int(w/2)))
+                      (1, channels[1], int(h/2), int(w/2)), (1, channels[1], int(h/2), int(w/2)))
     profile.set_shape(inputT2.name, (1, channels[2], int(h/4), int(w/4)),
-                      (10, channels[2], int(h/4), int(w/4)), (100, channels[2], int(h/4), int(w/4)))
+                      (1, channels[2], int(h/4), int(w/4)), (1, channels[2], int(h/4), int(w/4)))
     profile.set_shape(inputT3.name, (1, channels[3], int(h/8), int(w/8)),
-                      (10, channels[3], int(h/8), int(w/8)), (100, channels[3], int(h/8), int(w/8)))
+                      (1, channels[3], int(h/8), int(w/8)), (1, channels[3], int(h/8), int(w/8)))
     profile.set_shape(inputT4.name, (1, channels[4], int(h/16), int(w/16)),
-                      (10, channels[4], int(h/16), int(w/16)), (100, channels[4], int(h/16), int(w/16)))
+                      (1, channels[4], int(h/16), int(w/16)), (1, channels[4], int(h/16), int(w/16)))
     profile.set_shape(inputT5.name, (1, channels[5], int(h/32), int(w/32)),
-                      (10, channels[5], int(h/32), int(w/32)), (100, channels[5], int(h/32), int(w/32)))
+                      (1, channels[5], int(h/32), int(w/32)), (1, channels[5], int(h/32), int(w/32)))
     config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network)

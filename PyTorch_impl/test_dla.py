@@ -20,7 +20,7 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     batch_size = 1
     m.eval()
 
-    logger = trt.Logger(trt.Logger.INFO)
+    logger = trt.Logger(trt.Logger.VERBOSE)
     builder = trt.Builder(logger)
     network = builder.create_network(
         1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))  #
@@ -30,9 +30,9 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     config.flags = 0                                             #
 
     inputT0 = network.add_input(
-        'inputT0', trt.DataType.FLOAT, (-1, input_channel, -1, -1))
+        'inputT0', trt.DataType.FLOAT, (1, input_channel, h, w))
     profile.set_shape(inputT0.name, (1, input_channel, h, w),
-                      (10, input_channel, h, w), (100, input_channel, h, w))
+                      (1, input_channel, h, w), (1, input_channel, h, w))
     config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network)

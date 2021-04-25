@@ -22,7 +22,7 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     batch_size = 1
     m.eval()
 
-    logger = trt.Logger(trt.Logger.INFO)
+    logger = trt.Logger(trt.Logger.VERBOSE)
     builder = trt.Builder(logger)
     network = builder.create_network(
         1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))  #
@@ -32,18 +32,18 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     config.flags = 0                                             #
 
     inputT0 = network.add_input(
-        'inputT0', trt.DataType.FLOAT, (-1, channels[0], int(h/4), int(w/4)))
+        'inputT0', trt.DataType.FLOAT, (1, channels[0], int(h/4), int(w/4)))
     inputT1 = network.add_input(
-        'inputT1', trt.DataType.FLOAT, (-1, channels[1], int(h/8), int(w/8)))
+        'inputT1', trt.DataType.FLOAT, (1, channels[1], int(h/8), int(w/8)))
     inputT2 = network.add_input(
-        'inputT2', trt.DataType.FLOAT, (-1, channels[2], int(h/16), int(w/16)))
+        'inputT2', trt.DataType.FLOAT, (1, channels[2], int(h/16), int(w/16)))
 
     profile.set_shape(inputT0.name, (1, channels[0], int(h/4), int(w/4)),
-                      (10, channels[0], int(h/4), int(w/4)), (100, channels[0], int(h/4), int(w/4)))
+                      (1, channels[0], int(h/4), int(w/4)), (1, channels[0], int(h/4), int(w/4)))
     profile.set_shape(inputT1.name, (1, channels[1], int(h/8), int(w/8)),
-                      (10, channels[1], int(h/8), int(w/8)), (100, channels[1], int(h/8), int(w/8)))
+                      (1, channels[1], int(h/8), int(w/8)), (1, channels[1], int(h/8), int(w/8)))
     profile.set_shape(inputT2.name, (1, channels[2], int(h/16), int(w/16)),
-                      (10, channels[2], int(h/16), int(w/16)), (100, channels[2], int(h/16), int(w/16)))
+                      (1, channels[2], int(h/16), int(w/16)), (1, channels[2], int(h/16), int(w/16)))
     config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network)
@@ -66,11 +66,11 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     stream = cuda.Stream()
 
     data1 = np.arange(1*channels[0]*int(h/4)*int(w/4),
-                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))/channels[0]/255+10
+                     dtype=np.float32).reshape(batch_size, channels[0], int(h/4), int(w/4))/channels[0]+10
     data2 = np.arange(1*channels[1]*int(h/8)*int(w/8),
-                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]/255+10
+                     dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]+10
     data3 = np.arange(1*channels[2]*int(h/16)*int(w/16),
-                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]/255+10
+                     dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]+10
     np.random.shuffle(data1.reshape(-1))
     np.random.shuffle(data2.reshape(-1))
     np.random.shuffle(data3.reshape(-1))
@@ -97,8 +97,8 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
     print(data1)
     print("outputH0:", outputH0.shape, engine.get_binding_dtype(3))
     print(outputH0)
-
-    outputH0_torch = m([torch.tensor(data1),torch.tensor(data2),torch.tensor(data3)], 0, 3)
+    with torch.no_grad():
+        outputH0_torch = m([torch.tensor(data1),torch.tensor(data2),torch.tensor(data3)], 0, 3)
     print("outputH0 in Pytorch:", outputH0_torch.shape)
     print(outputH0_torch)
 

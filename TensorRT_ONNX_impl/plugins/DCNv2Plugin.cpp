@@ -1,7 +1,6 @@
 #include "DCNv2Plugin.h"
 #include <torch/script.h>
 #include <ATen/ATen.h>
-#include <ATen/cuda/CUDAContext.h>
 
 at::Tensor
 dcn_v2_cuda_forward(const at::Tensor &input,

@@ -10,7 +10,7 @@ public:
 
     DCNv2Plugin(int output_channel) {
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libtorch_cuda.so", RTLD_LAZY);
-        dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libc10_cuda.so", RTLD_LAZY);
+        // dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libc10_cuda.so", RTLD_LAZY);
         m.out_channel = output_channel;
     }
 
@@ -64,7 +64,7 @@ public:
     }
     
     virtual void configurePlugin(const nvinfer1::DynamicPluginTensorDesc* in, int nbInput, const nvinfer1::DynamicPluginTensorDesc* out, int nbOutput) override {
-        std::cout << "configurePlugin type=" << (int)out[0].desc.type << std::endl;
+        std::cout << "configurePlugin type=" << (int)in[0].desc.type << (int)out[0].desc.type << std::endl;
     }
 
     size_t getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int32_t nbInputs, const nvinfer1::PluginTensorDesc *outputs, int32_t nbOutputs) const override {return 0;}

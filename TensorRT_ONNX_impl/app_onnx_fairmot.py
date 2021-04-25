@@ -34,14 +34,14 @@ output3_data_pytorch = output[0]['id'].cpu().detach().numpy()
 # print(output3_data_pytorch)
 
 # 10 rounds of PyTorch FairMOT
-# nRound = 10
-# torch.cuda.synchronize()
-# t0 = time.time()
-# for i in range(nRound):
-#     model(im_blob)
-# torch.cuda.synchronize()
-# time_pytorch = (time.time() - t0) / nRound
-# print('PyTorch time:', time_pytorch)
+nRound = 10
+torch.cuda.synchronize()
+t0 = time.time()
+for i in range(nRound):
+    model(im_blob)
+torch.cuda.synchronize()
+time_pytorch = (time.time() - t0) / nRound
+print('PyTorch time:', time_pytorch)
 
 
 from trt_lite import TrtLite
@@ -90,15 +90,15 @@ for engine_file_path in ['fairmot.trt']:
     # print(output2_data_trt)
     # print(output3_data_trt)
 
-    # cuda.Context.synchronize()
-    # t0 = time.time()
-    # for i in range(nRound):
-    #     trt.execute(d_buffers, i2shape)
-    # cuda.Context.synchronize()
-    # time_trt = (time.time() - t0) / nRound
-    # print('TensorRT time:', time_trt)
+    cuda.Context.synchronize()
+    t0 = time.time()
+    for i in range(nRound):
+        trt.execute(d_buffers, i2shape)
+    cuda.Context.synchronize()
+    time_trt = (time.time() - t0) / nRound
+    print('TensorRT time:', time_trt)
 
-    # print('Speedup:', time_pytorch / time_trt)
+    print('Speedup:', time_pytorch / time_trt)
     print('Average diff percentage1:', np.mean(np.abs(output1_data_pytorch - output1_data_trt) / np.abs(output1_data_pytorch)))
     print('Average diff percentage2:', np.mean(np.abs(output2_data_pytorch - output2_data_trt) / np.abs(output2_data_pytorch)))
     print('Average diff percentage3:', np.mean(np.abs(output3_data_pytorch - output3_data_trt) / np.abs(output3_data_pytorch)))

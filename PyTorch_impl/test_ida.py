@@ -71,11 +71,14 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
                      dtype=np.float32).reshape(batch_size, channels[1], int(h/8), int(w/8))/channels[1]/255+10
     data3 = np.arange(1*channels[2]*int(h/16)*int(w/16),
                      dtype=np.float32).reshape(batch_size, channels[2], int(h/16), int(w/16))/channels[2]/255+10
-    inputH0 = np.ascontiguousarray(data1.reshape(-1))
+    np.random.shuffle(data1.reshape(-1))
+    np.random.shuffle(data2.reshape(-1))
+    np.random.shuffle(data3.reshape(-1))
+    inputH0 = np.ascontiguousarray(data1)
     inputD0 = cuda.mem_alloc(inputH0.nbytes)
-    inputH1 = np.ascontiguousarray(data2.reshape(-1))
+    inputH1 = np.ascontiguousarray(data2)
     inputD1 = cuda.mem_alloc(inputH1.nbytes)
-    inputH2 = np.ascontiguousarray(data3.reshape(-1))
+    inputH2 = np.ascontiguousarray(data3)
     inputD2 = cuda.mem_alloc(inputH2.nbytes)
     outputH0 = np.empty(context.get_binding_shape(
         3), dtype=trt.nptype(engine.get_binding_dtype(3)))    #

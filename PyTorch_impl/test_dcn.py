@@ -53,7 +53,8 @@ def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m
 
     data = np.arange(1*input_channel*h*w,
                      dtype=np.float32).reshape(batch_size, input_channel, h, w)*10+10
-    inputH0 = np.ascontiguousarray(data.reshape(-1))
+    np.random.shuffle(data.reshape(-1))
+    inputH0 = np.ascontiguousarray(data)
     inputD0 = cuda.mem_alloc(inputH0.nbytes)
     outputH0 = np.empty(context.get_binding_shape(
         1), dtype=trt.nptype(engine.get_binding_dtype(1)))    #

@@ -233,16 +233,11 @@ class DCN(DCNv2):
     def TRT_export(self, constructor: TRT_Constructor, x):
         out = constructor.Conv2d(self.conv_offset_mask, x)
         offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
-        print(offset.shape)
         mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
         mask = constructor.Sigmoid(mask)
-        print(mask.shape)
-        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.detach().numpy())
-        print(weight.shape)
-        bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.detach().numpy())
-        print(bias.shape)
+        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.detach().cpu().numpy())
+        bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.detach().cpu().numpy())
         out = constructor.DCNv2(x, self.out_channels, offset, mask, weight, bias)
-        print(out.shape)
         return out
 
 

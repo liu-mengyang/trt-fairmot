@@ -16,8 +16,9 @@ def get_plugin_creator(plugin_name):
     return plugin_creator
 
 class TRT_Constructor:
-    def __init__(self, network: trt.tensorrt.INetworkDefinition):
+    def __init__(self, network: trt.tensorrt.INetworkDefinition, cuda=False):
         self.network = network
+        self.cuda = cuda
 
     def MaxPool2d(self, pool: nn.MaxPool2d, x: trt.tensorrt.ITensor):
         stride, padding, window_size = pool.stride, pool.padding, pool.kernel_size
@@ -39,26 +40,44 @@ class TRT_Constructor:
         return y.get_output(0)
 
     def Conv2d(self, conv: nn.Conv2d, x: trt.tensorrt.ITensor):
-        y = self.network.add_convolution(
-            input=x,
-            num_output_maps=conv.out_channels,
-            kernel_shape=conv.kernel_size,
-            kernel=conv.weight.detach().numpy(),
-            bias=conv.bias.detach().numpy() if conv.bias is not None else None
-        )
+        if self.cuda:
+            y = self.network.add_convolution(
+                input=x,
+                num_output_maps=conv.out_channels,
+                kernel_shape=conv.kernel_size,
+                kernel=conv.weight.detach().cpu().numpy(),
+                bias=conv.bias.detach().cpu().numpy() if conv.bias is not None else None
+            )
+        else:
+            y = self.network.add_convolution(
+                input=x,
+                num_output_maps=conv.out_channels,
+                kernel_shape=conv.kernel_size,
+                kernel=conv.weight.detach().numpy(),
+                bias=conv.bias.detach().numpy() if conv.bias is not None else None
+            )
         y.stride = conv.stride
         y.padding = conv.padding
         y.dilation = conv.dilation
         return y.get_output(0)
 
     def DeConv2d(self, deconv: nn.ConvTranspose2d, x: trt.tensorrt.ITensor):
-        y = self.network.add_deconvolution(
-            input=x,
-            num_output_maps=deconv.out_channels,
-            kernel_shape=deconv.kernel_size,
-            kernel=deconv.weight.detach().numpy(),
-            bias=deconv.bias.detach().numpy() if deconv.bias is not None else None
-        )
+        if self.cuda:
+            y = self.network.add_deconvolution(
+                input=x,
+                num_output_maps=deconv.out_channels,
+                kernel_shape=deconv.kernel_size,
+                kernel=deconv.weight.detach().cpu().numpy(),
+                bias=deconv.bias.detach().cpu().numpy() if deconv.bias is not None else None
+            )
+        else:
+            y = self.network.add_deconvolution(
+                input=x,
+                num_output_maps=deconv.out_channels,
+                kernel_shape=deconv.kernel_size,
+                kernel=deconv.weight.detach().numpy(),
+                bias=deconv.bias.detach().numpy() if deconv.bias is not None else None
+            )
         y.stride = deconv.stride
         y.padding = deconv.padding
         y.num_groups = deconv.groups
@@ -70,8 +89,12 @@ class TRT_Constructor:
         beta = bn.bias
         mean = bn.running_mean
         var = bn.running_var
-        scale = gamma / np.sqrt(var**2+eps)
-        shift = - mean * scale + beta
+        if self.cuda:
+            scale = gamma.cpu() / np.sqrt(var.cpu()**2+eps)
+            shift = - mean.cpu() * scale + beta.cpu()
+        else:
+            scale = gamma / np.sqrt(var**2+eps)
+            shift = - mean * scale + beta
         y = self.network.add_scale(
             input=x,
             mode=trt.ScaleMode.CHANNEL,

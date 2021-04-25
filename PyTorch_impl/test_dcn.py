@@ -11,10 +11,10 @@ from TRT_Constructor import TRT_Constructor
 np.seterr(divide='ignore',invalid='ignore')
 
 # 用于测试的函数
-input_channel = 32
+input_channel = 64
 output_channel = 64
-h = 64 * 5
-w = 64 * 5
+h = int(608 / 4)
+w = int(1088 / 4)
 
 def test_fun(m: nn.Module):  # 输入待测试的nn.Module，主要测其中的m.TRT_export方法
     batch_size = 1

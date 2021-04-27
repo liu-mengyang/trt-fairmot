@@ -27,6 +27,7 @@ class DeformConv(nn.Module):
 
     def TRT_export(self, constructor: TRT_Constructor, x):
         x = self.conv.TRT_export(constructor, x)
+        # print(x.shape)
         x = constructor.BatchNorm2d(self.actf[0], x)
         x = constructor.ReLU(self.actf[1], x)
         return x

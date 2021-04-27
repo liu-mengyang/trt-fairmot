@@ -45,16 +45,16 @@ class TRT_Constructor:
                 input=x,
                 num_output_maps=conv.out_channels,
                 kernel_shape=conv.kernel_size,
-                kernel=conv.weight.detach().cpu().numpy(),
-                bias=conv.bias.detach().cpu().numpy() if conv.bias is not None else None
+                kernel=conv.weight.cpu().numpy(),
+                bias=conv.bias.cpu().numpy() if conv.bias is not None else None
             )
         else:
             y = self.network.add_convolution(
                 input=x,
                 num_output_maps=conv.out_channels,
                 kernel_shape=conv.kernel_size,
-                kernel=conv.weight.detach().numpy(),
-                bias=conv.bias.detach().numpy() if conv.bias is not None else None
+                kernel=conv.weight.numpy(),
+                bias=conv.bias.numpy() if conv.bias is not None else None
             )
         y.stride = conv.stride
         y.padding = conv.padding
@@ -67,16 +67,16 @@ class TRT_Constructor:
                 input=x,
                 num_output_maps=deconv.out_channels,
                 kernel_shape=deconv.kernel_size,
-                kernel=deconv.weight.detach().cpu().numpy(),
-                bias=deconv.bias.detach().cpu().numpy() if deconv.bias is not None else None
+                kernel=deconv.weight.cpu().numpy(),
+                bias=deconv.bias.cpu().numpy() if deconv.bias is not None else None
             )
         else:
             y = self.network.add_deconvolution(
                 input=x,
                 num_output_maps=deconv.out_channels,
                 kernel_shape=deconv.kernel_size,
-                kernel=deconv.weight.detach().numpy(),
-                bias=deconv.bias.detach().numpy() if deconv.bias is not None else None
+                kernel=deconv.weight.numpy(),
+                bias=deconv.bias.numpy() if deconv.bias is not None else None
             )
         y.stride = deconv.stride
         y.padding = deconv.padding
@@ -98,8 +98,8 @@ class TRT_Constructor:
         y = self.network.add_scale(
             input=x,
             mode=trt.ScaleMode.CHANNEL,
-            shift=shift.detach().numpy(),
-            scale=scale.detach().numpy()
+            shift=shift.numpy(),
+            scale=scale.numpy()
         )
         return y.get_output(0)
 
@@ -136,7 +136,7 @@ class TRT_Constructor:
             print('Plugin DCNv2Plugin not found. Exiting')
             exit()
         fc = trt.PluginFieldCollection()
-        fc.append(trt.PluginField("out_channel", np.array([out_channels], np.int32)))
+        # fc.append(trt.PluginField("out_channel", np.array([out_channels], np.int32)))
         y = self.network.add_plugin_v2([x, offset, mask, weight, bias], 
             plugin_creator.create_plugin('DCNv2Plugin', fc))
         return y.get_output(0)

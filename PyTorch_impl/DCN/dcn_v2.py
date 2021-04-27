@@ -56,6 +56,10 @@ class _DCNv2(Function):
         ctx.dilation = _pair(dilation)
         ctx.kernel_size = _pair(weight.shape[2:4])
         ctx.deformable_groups = deformable_groups
+        # offset = np.arange(18*608*1088, dtype=np.float32).reshape(18, 608, 1088)
+        # mask = np.arange(9*608*1088, dtype=np.float32).reshape(9*608*1088)
+        # weight = np.arange(64*64*3*3, dtype=np.float32).reshape(64*64*3*3)
+        # bias = np.arange(64, dtype=np.float32)
         output = _backend.dcn_v2_forward(
             input.cuda(),
             weight.cuda(),
@@ -229,14 +233,29 @@ class DCN(DCNv2):
             self.dilation,
             self.deformable_groups,
         )
-
+ 
     def TRT_export(self, constructor: TRT_Constructor, x):
+        # print(x.shape)
         out = constructor.Conv2d(self.conv_offset_mask, x)
-        offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
-        mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
+        # print(out.shape)
+        if (len(x.shape)==3):
+            offset = constructor.Slice(out, (0, 0, 0), (18, x.shape[-2], x.shape[-1]), (1, 1, 1))
+            mask = constructor.Slice(out, (18, 0, 0), (9,  x.shape[-2], x.shape[-1]), (1, 1, 1))
+        else:
+            offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
+            mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
         mask = constructor.Sigmoid(mask)
-        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.detach().cpu().numpy())
-        bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.detach().cpu().numpy())
+        weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.cpu().numpy())
+        bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.cpu().numpy())
+        # offset = np.arange(18*608*1088, dtype=np.float32).reshape(18, 608, 1088)
+        # mask = np.arange(9*608*1088, dtype=np.float32).reshape(9*608*1088)
+        # weight = np.arange(64*64*3*3, dtype=np.float32).reshape(64*64*3*3)
+        # bias = np.arange(64, dtype=np.float32)
+        # print(offset.shape)
+        # print(mask.shape)
+        # print(weight.shape)
+        # print(bias.shape)
+        # # print(x.shape)
         out = constructor.DCNv2(x, self.out_channels, offset, mask, weight, bias)
         return out
 

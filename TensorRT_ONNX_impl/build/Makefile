@@ -15,21 +15,19 @@ OBJ_DIR = obj
 OBJ = $(shell find $(OBJ_DIR) -name *.o 2>/dev/null)
 DEP = $(OBJ:.o=.d)
 
-BIN = AppBasic
+BIN = 
 SO = DCNv2Plugin.so
 
 all: $(BIN) $(SO)
 
-AppBasic: $(addprefix $(OBJ_DIR)/, AppBasic.o)
-
-DCNv2Plugin.so: $(addprefix $(OBJ_DIR)/, DCNv2Plugin.o dcn_v2_cuda.o dcn_v2_im2col_cuda.o)
+DCNv2Plugin.so: $(addprefix $(OBJ_DIR)/, DCNv2Plugin.o DeformConv.o)
 
 -include $(DEP)
 
 clean:
 	rm -rf $(BIN) $(SO) $(DEP) $(OBJ_DIR) out.trt int8_cache.*
 
-VPATH = ../include:../samples:../plugins
+VPATH = ../include:../plugins
 
 $(OBJ_DIR)/%.o: %.cu
 	@mkdir -p $(@D)

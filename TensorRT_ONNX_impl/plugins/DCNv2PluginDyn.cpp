@@ -43,9 +43,9 @@ int DCNv2PluginDyn::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const n
     at::Tensor output = torch::from_blob(outputs[0], {1, channels_out, height_out, width_out}, options);
     at::Tensor ones = at::Tensor();
     at::Tensor columns = at::Tensor();
-    std::cout << input.size(0) << " " << input.size(1) << " " << input.size(2) << " " << input.size(3) << std::endl;
+    // std::cout << input.size(0) << " " << input.size(1) << " " << input.size(2) << " " << input.size(3) << std::endl;
     modulated_deform_conv_forward(input, weight, bias, ones, offset, mask, output, columns, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w, 1, deformable_group, true);
-    std::cout << output.size(0) << " " << output.size(1) << " " << output.size(2) << " " << output.size(3) << std::endl;
+    // std::cout << output.size(0) << " " << output.size(1) << " " << output.size(2) << " " << output.size(3) << std::endl;
     return 0;
 }
 

@@ -130,12 +130,6 @@ public:
     } 
     nvinfer1::IPluginV2* createPlugin(const char* name, const nvinfer1::PluginFieldCollection* fc) override {
         // std::cout << __FUNCTION__ << std::endl;
-        // int out_channel = 0;
-        // for (int i = 0; i < fc->nbFields; i++) {
-        //     if (!strcmp(fc->fields[i].name, "out_channel")) {
-        //         out_channel = *(static_cast<const int*>(fc->fields[i].data));
-        //     }
-        // }
         return new DCNv2PluginDyn();
     }
     

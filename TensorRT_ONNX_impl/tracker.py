@@ -9,7 +9,11 @@ import torch
 import cv2
 import csv
 import torch.nn.functional as F
+import ctypes
+import pycuda.driver as cuda
+import pycuda.autoinit
 
+from trt_lite import TrtLite
 from build_model import build_fairmot, load_model
 from fairmot.models.decode import mot_decode
 from fairmot.models.utils import _tranpose_and_gather_feat
@@ -169,6 +173,12 @@ class STrack(BaseTrack):
     def __repr__(self):
         return 'OT_{}_({}-{})'.format(self.track_id, self.start_frame, self.end_frame)
 
+class PyTorchTensorHolder(pycuda.driver.PointerHolderBase):
+    def __init__(self, tensor):
+        super(PyTorchTensorHolder, self).__init__()
+        self.tensor = tensor
+    def get_pointer(self):
+        return self.tensor.data_ptr()
 
 class FairTracker(object):
     def __init__(self, opt, frame_rate=30):
@@ -178,10 +188,16 @@ class FairTracker(object):
         else:
             opt.device = torch.device('cpu')
         print('Creating model...')
-        self.model = build_fairmot()
-        self.model = load_model(self.model, opt.load_model)
-        self.model = self.model.to(opt.device)
-        self.model.eval()
+        self.trt_enable = opt.trt_enable
+        if self.trt_enable:
+            ctypes.cdll.LoadLibrary('./build/DCNv2PluginDyn.so')
+            self.model = TrtLite(engine_file_path='fairmot.trt')
+            self.model.print_info()
+        else:
+            self.model = build_fairmot()
+            self.model = load_model(self.model, opt.load_model)
+            self.model = self.model.to(opt.device)
+            self.model.eval()
 
         self.tracked_stracks = []  # type: list[STrack]
         self.lost_stracks = []  # type: list[STrack]
@@ -258,7 +274,27 @@ class FairTracker(object):
         infer_st = time.time()
         ''' Step 1: Network forward, get detections & embeddings'''
         with torch.no_grad():
-            output = self.model(im_blob)[-1]
+            if self.trt_enable:
+                i2shape = {0: (1, 3, 608, 1088)}
+                io_info = self.model.get_io_info(i2shape)
+                d_buffers = self.model.allocate_io_buffers(i2shape, True)
+                # output1_data_trt = np.zeros(io_info[1][2], dtype=np.float32)
+                # output2_data_trt = np.zeros(io_info[2][2], dtype=np.float32)
+                # output3_data_trt = np.zeros(io_info[3][2], dtype=np.float32)
+                output = {'hm': torch.zeros(io_info[1][2][0],io_info[1][2][1],io_info[1][2][2],io_info[1][2][3]).cuda().float(),
+                          'wh': torch.zeros(io_info[2][2][0],io_info[2][2][1],io_info[2][2][2],io_info[2][2][3]).cuda().float(),
+                          'id': torch.zeros(io_info[3][2][0],io_info[3][2][1],io_info[3][2][2],io_info[3][2][3]).cuda().float()}
+
+                # input from device to device
+                cuda.memcpy_dtod(d_buffers[0], PyTorchTensorHolder(im_blob), im_blob.nelement() * im_blob.element_size())
+                self.model.execute(d_buffers, i2shape)
+
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['hm']), d_buffers[1], output['hm'].nelement() * output['hm'].element_size())
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['wh']), d_buffers[2], output['wh'].nelement() * output['wh'].element_size())
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['id']), d_buffers[3], output['id'].nelement() * output['id'].element_size())
+                # output = {'hm':torch.tensor(d_buffers[1]),'wh':torch.tensor(d_buffers[2]),'id':torch.tensor(d_buffers[3])}
+            else:
+                output = self.model(im_blob)[-1]
             hm = output['hm'].sigmoid_()
             wh = output['wh']
             id_feature = output['id']

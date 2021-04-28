@@ -158,6 +158,10 @@ class opts(object):
         self.parser.add_argument('--not_reg_offset', default=True, action='store_true',
                                 help='not regress local offset.')
 
+        # TRT
+        self.parser.add_argument('--trt_enable', default=False,
+                                help='use trt engine to accelerate inference.')
+
     def parse(self, args=''):
         if args == '':
             opt = self.parser.parse_args()

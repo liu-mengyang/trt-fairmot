@@ -239,7 +239,7 @@ class IDAUp(nn.Module):
             up = nn.ConvTranspose2d(o, o, f * 2, stride=f, 
                                     padding=f // 2, output_padding=0,
                                     groups=o, bias=False)
-            # fill_up_weights(up)
+            fill_up_weights(up)
 
             setattr(self, 'proj_' + str(i), proj)
             setattr(self, 'up_' + str(i), up)
@@ -310,18 +310,18 @@ class DLASeg(nn.Module):
                   nn.Conv2d(head_conv, classes, 
                     kernel_size=final_kernel, stride=1, 
                     padding=final_kernel // 2, bias=True))
-            #   if 'hm' in head:
-            #     fc[-1].bias.data.fill_(-2.19)
-            #   else:
-            #     fill_fc_weights(fc)
+              if 'hm' in head:
+                fc[-1].bias.data.fill_(-2.19)
+              else:
+                fill_fc_weights(fc)
             else:
               fc = nn.Conv2d(channels[self.first_level], classes, 
                   kernel_size=final_kernel, stride=1, 
                   padding=final_kernel // 2, bias=True)
-            #   if 'hm' in head:
-            #     fc.bias.data.fill_(-2.19)
-            #   else:
-            #     fill_fc_weights(fc)
+              if 'hm' in head:
+                fc.bias.data.fill_(-2.19)
+              else:
+                fill_fc_weights(fc)
             self.__setattr__(head, fc)
 
     def forward(self, x):

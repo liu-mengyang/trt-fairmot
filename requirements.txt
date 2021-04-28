@@ -1,0 +1,8 @@
+ninja
+opencv-python
+numba
+matplotlib
+scipy
+lap
+cython
+cython-bbox

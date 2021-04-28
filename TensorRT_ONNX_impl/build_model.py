@@ -127,7 +127,6 @@ class DeformConv(nn.Module):
 
     def forward(self, x):
         x = self.conv(x)
-        print(torch.mean(x))
         x = self.actf(x)
         return x
 
@@ -321,7 +320,6 @@ class DLASeg(nn.Module):
         for i in range(self.last_level - self.first_level):
             y.append(x[i].clone())
         self.ida_up(y, 0, len(y))
-        # print(torch.mean(y))
 
         z = {}
         for head in self.heads:

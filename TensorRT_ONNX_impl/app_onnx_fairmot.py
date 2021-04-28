@@ -9,7 +9,7 @@ import ctypes
 
 from build_model import build_fairmot, load_model
 
-ctypes.cdll.LoadLibrary('./build/DCNv2Plugin.so')
+ctypes.cdll.LoadLibrary('./build/DCNv2PluginDyn.so')
 
 net = build_fairmot()
 model = load_model(net, "../weights/fairmot_dla34.pth")
@@ -42,7 +42,6 @@ for i in range(nRound):
 torch.cuda.synchronize()
 time_pytorch = (time.time() - t0) / nRound
 print('PyTorch time:', time_pytorch)
-
 
 from trt_lite import TrtLite
 import numpy as np

@@ -16,11 +16,12 @@ OBJ = $(shell find $(OBJ_DIR) -name *.o 2>/dev/null)
 DEP = $(OBJ:.o=.d)
 
 BIN = 
-SO = DCNv2Plugin.so
+SO = DCNv2Plugin.so DCNv2PluginDyn.so
 
 all: $(BIN) $(SO)
 
 DCNv2Plugin.so: $(addprefix $(OBJ_DIR)/, DCNv2Plugin.o DeformConv.o)
+DCNv2PluginDyn.so: $(addprefix $(OBJ_DIR)/, DCNv2PluginDyn.o DeformConv.o)
 
 -include $(DEP)
 

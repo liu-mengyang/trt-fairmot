@@ -126,7 +126,6 @@ class DeformConv(nn.Module):
         self.conv = DCN(chi, cho, kernel_size=(3,3), stride=1, padding=1, dilation=1, deformable_groups=1)
 
     def forward(self, x):
-        # print(x)
         x = self.conv(x)
         print(torch.mean(x))
         x = self.actf(x)
@@ -157,14 +156,6 @@ class DLA(nn.Module):
                            level_root=True, root_residual=residual_root)
         self.level5 = Tree(levels[5], block, channels[4], channels[5], 2,
                            level_root=True, root_residual=residual_root)
-
-        # for m in self.modules():
-        #     if isinstance(m, nn.Conv2d):
-        #         n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-        #         m.weight.data.normal_(0, math.sqrt(2. / n))
-        #     elif isinstance(m, nn.BatchNorm2d):
-        #         m.weight.data.fill_(1)
-        #         m.bias.data.zero_()
 
     def _make_level(self, block, inplanes, planes, blocks, stride=1):
         downsample = None
@@ -204,7 +195,6 @@ class DLA(nn.Module):
         return y
 
     def load_pretrained_model(self, data='imagenet', name='dla34', hash='ba72cf86'):
-        # fc = self.fc
         if name.endswith('.pth'):
             model_weights = torch.load(data + name)
         else:
@@ -214,7 +204,6 @@ class DLA(nn.Module):
             self.channels[-1], num_classes,
             kernel_size=1, stride=1, padding=0, bias=True)
         self.load_state_dict(model_weights)
-        # self.fc = fc
 
 # DLA-34
 def dla34(pretrained=True, **kwargs):  # DLA-34

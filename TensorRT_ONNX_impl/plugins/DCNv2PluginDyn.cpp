@@ -3,21 +3,6 @@
 #include <ATen/ATen.h>
 #include <ATen/cuda/CUDAContext.h>
 
-// at::Tensor
-// dcn_v2_cuda_forward(const at::Tensor &input,
-//                     const at::Tensor &weight,
-//                     const at::Tensor &bias,
-//                     const at::Tensor &offset,
-//                     const at::Tensor &mask,
-//                     const int kernel_h,
-//                     const int kernel_w,
-//                     const int stride_h,
-//                     const int stride_w,
-//                     const int pad_h,
-//                     const int pad_w,
-//                     const int dilation_h,
-//                     const int dilation_w,
-//                     const int deformable_group);
 
 void modulated_deform_conv_forward(
     at::Tensor input, at::Tensor weight, at::Tensor bias, at::Tensor ones,
@@ -61,13 +46,6 @@ int DCNv2PluginDyn::enqueue(const nvinfer1::PluginTensorDesc *inputDesc, const n
     std::cout << input.size(0) << " " << input.size(1) << " " << input.size(2) << " " << input.size(3) << std::endl;
     modulated_deform_conv_forward(input, weight, bias, ones, offset, mask, output, columns, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w, 1, deformable_group, true);
     std::cout << output.size(0) << " " << output.size(1) << " " << output.size(2) << " " << output.size(3) << std::endl;
-    // at::Tensor result = (dcn_v2_cuda_forward(input, weight, bias, offset, mask,
-    //                              kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w,
-    //                              dilation_h, dilation_w, deformable_group)[0]);
-    // output[0] = result.reshape({channels_out, height_out, width_out});
-    // std::cout << output.ndimension() << std::endl;
-    // if (at::mean(output).item<int>() != 0)
-    //     std::cout << output[0][0][0] << std::endl;
     return 0;
 }
 

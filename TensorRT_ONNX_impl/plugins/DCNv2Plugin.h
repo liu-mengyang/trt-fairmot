@@ -21,7 +21,6 @@ public:
     DCNv2Plugin() {
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libtorch_cuda.so", RTLD_LAZY);
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libc10_cuda.so", RTLD_LAZY);
-        // m.outputDim.d[0] = output_channel;
     }
 
     DCNv2Plugin(const void *buffer, size_t length) {
@@ -77,7 +76,6 @@ public:
         m.inputDim = in[0].dims;
         m.outputDim = in[0].dims;
         m.outputDim.d[0] = in[3].dims.d[0];
-        // out[0].dims = m.outputDim;
         std::cout << "configurePlugin type=" << (int)out[0].type << ", inputDim=" << to_string(m.inputDim) << ", outputDim=" << to_string(m.outputDim) << std::endl;
     }
 
@@ -113,8 +111,6 @@ public:
     static nvinfer1::PluginFieldCollection fc;
     std::vector<nvinfer1::PluginField> mPluginAttributes;
     DCNv2PluginCreator() {
-        // mPluginAttributes.emplace_back(nvinfer1::PluginField("out_channel", nullptr, nvinfer1::PluginFieldType::kINT32, 1));
-
         fc.nbFields = mPluginAttributes.size();
         fc.fields = mPluginAttributes.data();
     }
@@ -129,17 +125,9 @@ public:
     const char* getPluginNamespace() const override {return "";}
 
     const nvinfer1::PluginFieldCollection* getFieldNames() override {
-        // std::cout << __FUNCTION__ << std::endl;
         return &fc;
     } 
     nvinfer1::IPluginV2* createPlugin(const char* name, const nvinfer1::PluginFieldCollection* fc) override {
-        // std::cout << __FUNCTION__ << std::endl;
-        // int out_channel = 0;
-        // for (int i = 0; i < fc->nbFields; i++) {
-        //     if (!strcmp(fc->fields[i].name, "out_channel")) {
-        //         out_channel = *(static_cast<const int*>(fc->fields[i].data));
-        //     }
-        // }
         return new DCNv2Plugin();
     }
     

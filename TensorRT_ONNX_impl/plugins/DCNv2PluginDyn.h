@@ -21,7 +21,6 @@ public:
     DCNv2PluginDyn() {
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libtorch_cuda.so", RTLD_LAZY);
         dlopen("/usr/local/lib/python3.8/dist-packages/torch/lib/libc10_cuda.so", RTLD_LAZY);
-        // m.outputDim.d[0] = output_channel;
     }
 
     DCNv2PluginDyn(const void *buffer, size_t length) {
@@ -77,7 +76,6 @@ public:
         m.inputDim = in[0].desc.dims;
         m.outputDim = in[0].desc.dims;
         m.outputDim.d[1] = in[3].desc.dims.d[0];
-        // out[0].dims = m.outputDim;
         std::cout << "configurePlugin type=" << (int)out[0].desc.type << ", inputDim=" << to_string(m.inputDim) << ", outputDim=" << to_string(m.outputDim) << std::endl;
     }
 
@@ -91,8 +89,6 @@ public:
     const char* getPluginNamespace() const override {return "";}
     const char* getPluginType() const override {return "DCNv2Plugin";}
     const char* getPluginVersion() const override {return "1";}
-    // bool canBroadcastInputAcrossBatch(int inputIndex) const override {return false;}
-    // bool isOutputBroadcastAcrossBatch(int outputIndex, const bool* inputIsBroadcasted, int nbInputs) const {return false;}
     void attachToContext(cudnnContext* /*cudnn*/, cublasContext* /*cublas*/, nvinfer1::IGpuAllocator* /*allocator*/) {}
     void detachFromContext() {}
 

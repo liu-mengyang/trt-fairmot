@@ -272,7 +272,7 @@ class FairTracker(object):
                 'out_height': inp_height // self.opt.down_ratio,
                 'out_width': inp_width // self.opt.down_ratio}
 
-        # infer_st = time.time()
+        infer_st = time.time()
         ''' Step 1: Network forward, get detections & embeddings'''
         with torch.no_grad():
             if self.trt_enable:
@@ -308,7 +308,7 @@ class FairTracker(object):
             id_feature = id_feature.squeeze(0)
             id_feature = id_feature.cpu().numpy()
 
-        # infer_et = time.time()
+        infer_et = time.time()
         self.infert_lst.append(infer_et-infer_st)
         # print(infer_et-infer_st)
 

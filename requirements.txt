@@ -6,3 +6,4 @@ scipy
 lap
 cython
 cython-bbox
+motmetrics

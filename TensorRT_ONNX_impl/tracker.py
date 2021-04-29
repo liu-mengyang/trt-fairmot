@@ -292,7 +292,7 @@ class FairTracker(object):
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['hm']), d_buffers[1], output['hm'].nelement() * output['hm'].element_size())
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['wh']), d_buffers[2], output['wh'].nelement() * output['wh'].element_size())
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['id']), d_buffers[3], output['id'].nelement() * output['id'].element_size())
-                # output = {'hm':torch.tensor(d_buffers[1]),'wh':torch.tensor(d_buffers[2]),'id':torch.tensor(d_buffers[3])}
+                
             else:
                 output = self.model(im_blob)[-1]
             hm = output['hm'].sigmoid_()

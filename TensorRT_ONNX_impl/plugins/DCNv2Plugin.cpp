@@ -35,17 +35,15 @@ int DCNv2Plugin::enqueue(int nBatch, const void * const *inputs, void **outputs,
     const int height_out = outputDim.d[1];
     const int width_out = outputDim.d[2];
     
-    at::Tensor input = torch::from_blob(const_cast<void *>(inputs[0]), {1, channels_in, height_in, width_in}, options);
-    at::Tensor offset = torch::from_blob(const_cast<void *>(inputs[1]), {1, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
-    at::Tensor mask = torch::from_blob(const_cast<void *>(inputs[2]), {1, kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
+    at::Tensor input = torch::from_blob(const_cast<void *>(inputs[0]), {nBatch, channels_in, height_in, width_in}, options);
+    at::Tensor offset = torch::from_blob(const_cast<void *>(inputs[1]), {nBatch, 2 * kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
+    at::Tensor mask = torch::from_blob(const_cast<void *>(inputs[2]), {nBatch, kernel_h * kernel_w * deformable_group, height_in, width_in}, options);
     at::Tensor weight = torch::from_blob(const_cast<void *>(inputs[3]), {channels_out, channels_in, kernel_h, kernel_w}, options);
     at::Tensor bias = torch::from_blob(const_cast<void *>(inputs[4]), {channels_out}, options);
-    at::Tensor output = torch::from_blob(outputs[0], {1, channels_out, height_out, width_out}, options);
+    at::Tensor output = torch::from_blob(outputs[0], {nBatch, channels_out, height_out, width_out}, options);
     at::Tensor ones = at::Tensor();
     at::Tensor columns = at::Tensor();
-    // std::cout << input.size(0) << " " << input.size(1) << " " << input.size(2) << " " << input.size(3) << std::endl;
     modulated_deform_conv_forward(input, weight, bias, ones, offset, mask, output, columns, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w, dilation_h, dilation_w, 1, deformable_group, true);
-    // std::cout << output.size(0) << " " << output.size(1) << " " << output.size(2) << " " << output.size(3) << std::endl;
     return 0;
 }
 

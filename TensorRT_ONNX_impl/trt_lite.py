@@ -80,7 +80,6 @@ class TrtLite:
             i2shape = input_desc
             for i, shape in i2shape.items():
                 self.context.set_binding_shape(i, shape)
-            print("Execute started!")
             self.context.execute_async_v2(bindings, stream_handle, input_consumed)
             return
         

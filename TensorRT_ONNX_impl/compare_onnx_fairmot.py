@@ -44,7 +44,7 @@ class PyTorchTensorHolder(pycuda.driver.PointerHolderBase):
     def get_pointer(self):
         return self.tensor.data_ptr()
 
-for engine_file_path in ['fairmot.trt']:
+for engine_file_path in ['fairmot.trt', 'fairmot_fp16.trt']:
     if not os.path.exists(engine_file_path):
         print('Engine file', engine_file_path, 'doesn\'t exist. Please run trtexec and re-run this script.')
         exit(1)

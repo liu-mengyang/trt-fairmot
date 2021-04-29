@@ -76,7 +76,7 @@ public:
         m.inputDim = in[0].desc.dims;
         m.outputDim = in[0].desc.dims;
         m.outputDim.d[1] = in[3].desc.dims.d[0];
-        std::cout << "configurePlugin type=" << (int)out[0].desc.type << ", inputDim=" << to_string(m.inputDim) << ", outputDim=" << to_string(m.outputDim) << std::endl;
+        // std::cout << "configurePlugin type=" << (int)out[0].desc.type << ", inputDim=" << to_string(m.inputDim) << ", outputDim=" << to_string(m.outputDim) << std::endl;
     }
 
     size_t getWorkspaceSize(const nvinfer1::PluginTensorDesc *inputs, int32_t nbInputs, const nvinfer1::PluginTensorDesc *outputs, int32_t nbOutputs) const override {return 0;}
@@ -109,8 +109,6 @@ public:
     static nvinfer1::PluginFieldCollection fc;
     std::vector<nvinfer1::PluginField> mPluginAttributes;
     DCNv2PluginDynCreator() {
-        // mPluginAttributes.emplace_back(nvinfer1::PluginField("out_channel", nullptr, nvinfer1::PluginFieldType::kINT32, 1));
-
         fc.nbFields = mPluginAttributes.size();
         fc.fields = mPluginAttributes.data();
     }

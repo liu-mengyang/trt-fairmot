@@ -7,3 +7,4 @@ lap
 cython
 cython-bbox
 motmetrics
+openpy-xl

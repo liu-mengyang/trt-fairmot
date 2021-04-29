@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import motmetrics as mm
+import numpy as np
 
 import datasets.dataset.jde as datasets
 from test_utils import eval_seq

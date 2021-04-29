@@ -33,9 +33,9 @@ class DLAUp(nn.Module):
 
     def TRT_export(self, constructor: TRT_Constructor, layers):
         out = [layers[-1]] # start with 32
-        for i in range(len(layers) - 1):
-            y = getattr(self, 'ida_{}'.format(i)).TRT_export(constructor, layers, len(layers) - i - 2, len(layers))
-            out.insert(0, y)
+        for i in range(len(layers) - self.startp - 1):
+            getattr(self, 'ida_{}'.format(i)).TRT_export(constructor, layers, len(layers) - i - 2, len(layers))
+            out.insert(0, layers[-1])
         return out
 
 

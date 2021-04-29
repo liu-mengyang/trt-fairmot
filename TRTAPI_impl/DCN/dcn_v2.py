@@ -61,11 +61,11 @@ class _DCNv2(Function):
         # weight = np.arange(64*64*3*3, dtype=np.float32).reshape(64*64*3*3)
         # bias = np.arange(64, dtype=np.float32)
         output = _backend.dcn_v2_forward(
-            input.cuda(),
-            weight.cuda(),
-            bias.cuda(),
-            offset.cuda(),
-            mask.cuda(),
+            input,
+            weight,
+            bias,
+            offset,
+            mask,
             ctx.kernel_size[0],
             ctx.kernel_size[1],
             ctx.stride[0],
@@ -219,8 +219,9 @@ class DCN(DCNv2):
 
     def forward(self, input):
         out = self.conv_offset_mask(input)
-        o1, o2, mask = torch.chunk(out, 3, dim=1)
-        offset = torch.cat((o1, o2), dim=1)
+        # o1, o2, mask = torch.chunk(out, 3, dim=1)
+        # offset = torch.cat((o1, o2), dim=1)
+        offset, mask = torch.split(out, [18, 9], dim=1)
         mask = torch.sigmoid(mask)
         return dcn_v2_conv(
             input,
@@ -245,18 +246,10 @@ class DCN(DCNv2):
             offset = constructor.Slice(out, (0, 0, 0, 0), (1, 18, x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
             mask = constructor.Slice(out, (0, 18, 0, 0), (1, 9,  x.shape[-2], x.shape[-1]), (1, 1, 1, 1))
         mask = constructor.Sigmoid(mask)
+        # print(self.weight)
         weight = constructor.Constant(np.array(self.weight.data.shape), self.weight.cpu().numpy())
         bias = constructor.Constant(np.array(self.bias.data.shape), self.bias.cpu().numpy())
-        # offset = np.arange(18*608*1088, dtype=np.float32).reshape(18, 608, 1088)
-        # mask = np.arange(9*608*1088, dtype=np.float32).reshape(9*608*1088)
-        # weight = np.arange(64*64*3*3, dtype=np.float32).reshape(64*64*3*3)
-        # bias = np.arange(64, dtype=np.float32)
-        # print(offset.shape)
-        # print(mask.shape)
-        # print(weight.shape)
-        # print(bias.shape)
-        # # print(x.shape)
-        out = constructor.DCNv2(x, self.out_channels, offset, mask, weight, bias)
+        out = constructor.DCNv2(x, offset, mask, weight, bias)
         return out
 
 

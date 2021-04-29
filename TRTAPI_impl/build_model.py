@@ -28,6 +28,5 @@ def load_model(model, model_path, optimizer=None, resume=False,
       state_dict[k[7:]] = state_dict_[k]
     else:
       state_dict[k] = state_dict_[k]
-
   model.load_state_dict(state_dict, strict=False)
   return model

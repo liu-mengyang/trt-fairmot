@@ -2,8 +2,6 @@ import torch
 import time
 import numpy as np
 import tensorrt as trt
-import pycuda.autoinit
-import pycuda.driver as cuda
 
 from build_model import build_fairmot, load_model
 from TRT_Constructor import TRT_Constructor
@@ -18,18 +16,21 @@ with torch.no_grad():
 
     ### TRT
     batch_size = 1
-    logger = trt.Logger(trt.Logger.VERBOSE)
-    builder = trt.Builder(logger)
-    builder.max_batch_size = 1
-    builder.max_workspace_size = 1 << 20
-    network = builder.create_network()  #
-    
     input_channel = 3
     h = 608
     w = 1088
 
-    inputT0 = network.add_input(
-        'inputT0', trt.DataType.FLOAT, (input_channel, h, w))
+    logger = trt.Logger(trt.Logger.VERBOSE)
+    builder = trt.Builder(logger)
+    network = builder.create_network(1<<int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))  #
+    profile = builder.create_optimization_profile()
+    config = builder.create_builder_config()
+    config.max_workspace_size = 1 << 30
+    config.flags = 0
+    
+    inputT0 = network.add_input('inputT0', trt.DataType.FLOAT, (1, input_channel, h, w))
+    profile.set_shape(inputT0.name, (1,input_channel,h,w),(1,input_channel,h,w),(1,input_channel,h,w))                    #
+    config.add_optimization_profile(profile)
 
     constructor = TRT_Constructor(network, cuda=True)
     output = model.TRT_export(constructor, inputT0)
@@ -37,8 +38,7 @@ with torch.no_grad():
     network.mark_output(output[0])
     network.mark_output(output[1])
     network.mark_output(output[2])
-    engine = builder.build_cuda_engine(
-        network)                              #
+    engine = builder.build_engine(network, config)                              #
     if engine == None:
         exit()
     with open("fairmot.trt", 'wb') as f:

@@ -5,7 +5,7 @@ import numpy as np
 from typing import List
 import ctypes
 
-ctypes.cdll.LoadLibrary('./build/DCNv2Plugin.so')
+ctypes.cdll.LoadLibrary('./build/DCNv2PluginDyn.so')
 
 def get_plugin_creator(plugin_name):
     plugin_creator_list = trt.get_plugin_registry().plugin_creator_list
@@ -130,7 +130,7 @@ class TRT_Constructor:
         y = self.network.add_constant(shape, weights)
         return y.get_output(0)
 
-    def DCNv2(self, x: trt.tensorrt.ITensor, out_channels, offset: trt.tensorrt.ITensor, mask: trt.tensorrt.ITensor, weight: trt.tensorrt.ITensor, bias: trt.tensorrt.ITensor):
+    def DCNv2(self, x: trt.tensorrt.ITensor, offset: trt.tensorrt.ITensor, mask: trt.tensorrt.ITensor, weight: trt.tensorrt.ITensor, bias: trt.tensorrt.ITensor):
         plugin_creator = get_plugin_creator('DCNv2Plugin')
         if plugin_creator == None:
             print('Plugin DCNv2Plugin not found. Exiting')

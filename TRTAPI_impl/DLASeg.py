@@ -78,24 +78,24 @@ class DLASeg(nn.Module):
         y = []
         for i in range(self.last_level - self.first_level):
             y.append(x[i].clone())
-        backbone_result = self.ida_up(y, 0, len(y))
+        self.ida_up(y, 0, len(y))
 
-        z = []
+        z = {}
         for head in self.heads:
-            z.append(self.__getattr__(head)(backbone_result))
-        return z
+            z[head] = self.__getattr__(head)(y[-1])
+        return [z]
 
     def TRT_export(self, constructor: TRT_Constructor, x):
         x = self.base.TRT_export(constructor, x)
-        x2 = self.dla_up.TRT_export(constructor, x[2:])
+        x = self.dla_up.TRT_export(constructor, x)
         y = []
         for i in range(self.last_level - self.first_level):
-            y.append(x2[i])
-        backbone_result = self.ida_up.TRT_export(constructor, y, 0, len(y))
+            y.append(x[i])
+        self.ida_up.TRT_export(constructor, y, 0, len(y))
 
         z = []
         for head in self.heads:
-            z_pare = _TRT_make_head(constructor, self.__getattr__(head), backbone_result)
+            z_pare = _TRT_make_head(constructor, self.__getattr__(head), y[-1])
             z.append(z_pare)
         return z
 

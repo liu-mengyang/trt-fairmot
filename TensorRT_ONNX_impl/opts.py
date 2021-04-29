@@ -16,7 +16,7 @@ class opts(object):
         self.parser.add_argument('--test', action='store_true')
         #self.parser.add_argument('--load_model', default='../models/ctdet_coco_dla_2x.pth',
                                 #help='path to pretrained model')
-        self.parser.add_argument('--load_model', default='../weights/fairmot_dla34.pth"',
+        self.parser.add_argument('--load_model', default='../weights/fairmot_dla34.pth',
                                 help='path to pretrained model')
         self.parser.add_argument('--resume', action='store_true',
                                 help='resume an experiment. '
@@ -161,6 +161,8 @@ class opts(object):
         # TRT
         self.parser.add_argument('--trt_enable', default=False,
                                 help='use trt engine to accelerate inference.')
+        self.parser.add_argument('--trt_load', default='../weights/fairmot.trt',
+                                help='the location of trt engine.')
 
     def parse(self, args=''):
         if args == '':

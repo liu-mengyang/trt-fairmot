@@ -191,7 +191,8 @@ class FairTracker(object):
         self.trt_enable = opt.trt_enable
         if self.trt_enable:
             ctypes.cdll.LoadLibrary('./build/DCNv2PluginDyn.so')
-            self.model = TrtLite(engine_file_path='fairmot.trt')
+            trt_file_path = opt.trt_load
+            self.model = TrtLite(engine_file_path=trt_file_path)
             self.model.print_info()
         else:
             self.model = build_fairmot()
@@ -271,30 +272,31 @@ class FairTracker(object):
                 'out_height': inp_height // self.opt.down_ratio,
                 'out_width': inp_width // self.opt.down_ratio}
 
-        infer_st = time.time()
+        # infer_st = time.time()
         ''' Step 1: Network forward, get detections & embeddings'''
         with torch.no_grad():
             if self.trt_enable:
                 i2shape = {0: (1, 3, 608, 1088)}
                 io_info = self.model.get_io_info(i2shape)
                 d_buffers = self.model.allocate_io_buffers(i2shape, True)
-                # output1_data_trt = np.zeros(io_info[1][2], dtype=np.float32)
-                # output2_data_trt = np.zeros(io_info[2][2], dtype=np.float32)
-                # output3_data_trt = np.zeros(io_info[3][2], dtype=np.float32)
                 output = {'hm': torch.zeros(io_info[1][2][0],io_info[1][2][1],io_info[1][2][2],io_info[1][2][3]).cuda().float(),
                           'wh': torch.zeros(io_info[2][2][0],io_info[2][2][1],io_info[2][2][2],io_info[2][2][3]).cuda().float(),
                           'id': torch.zeros(io_info[3][2][0],io_info[3][2][1],io_info[3][2][2],io_info[3][2][3]).cuda().float()}
 
                 # input from device to device
                 cuda.memcpy_dtod(d_buffers[0], PyTorchTensorHolder(im_blob), im_blob.nelement() * im_blob.element_size())
+
+                # infer_st = time.time()
                 self.model.execute(d_buffers, i2shape)
+                # infer_et = time.time()
 
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['hm']), d_buffers[1], output['hm'].nelement() * output['hm'].element_size())
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['wh']), d_buffers[2], output['wh'].nelement() * output['wh'].element_size())
                 cuda.memcpy_dtod(PyTorchTensorHolder(output['id']), d_buffers[3], output['id'].nelement() * output['id'].element_size())
-                
             else:
+                # infer_st = time.time()
                 output = self.model(im_blob)[-1]
+                # infer_et = time.time()
             hm = output['hm'].sigmoid_()
             wh = output['wh']
             id_feature = output['id']
@@ -306,8 +308,9 @@ class FairTracker(object):
             id_feature = id_feature.squeeze(0)
             id_feature = id_feature.cpu().numpy()
 
-        infer_et = time.time()
+        # infer_et = time.time()
         self.infert_lst.append(infer_et-infer_st)
+        # print(infer_et-infer_st)
 
         trk_st = time.time()
         dets = self.post_process(dets, meta)

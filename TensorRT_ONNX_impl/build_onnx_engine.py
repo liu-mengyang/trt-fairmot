@@ -11,6 +11,12 @@ model.eval()
 
 input_names = ['input']
 output_names = ['output1', 'output2', 'output3']
-torch.onnx.export(net, input_data, 'fairmot.onnx', input_names=input_names, output_names=output_names, verbose=True, opset_version=12, operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK)
+torch.onnx.export(net, input_data, 'fairmot.onnx', input_names=input_names, output_names=output_names,
+                  verbose=True, opset_version=12,
+                  dynamic_axes={"input":{0: "batch_size"}, 
+                                "output1":{0: "batch_size"}, 
+                                "output2":{0: "batch_size"}, 
+                                "output3":{0: "batch_size"}},
+                  operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK)
 
 

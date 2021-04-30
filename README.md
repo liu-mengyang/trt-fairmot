@@ -1,6 +1,6 @@
 # trt-fairmot
 
-该项目实现了TensorRT版本的多目标跟踪算法FairMOT，是DLA34骨干网络版本。
+该项目实现了多目标跟踪算法FairMOT的TensorRT版本，是DLA34骨干网络版本。
 
 ## 可运行的环境
 

@@ -55,7 +55,7 @@
 
 3. 安装本项目使用的一些第三方库
     ```sh
-    pip3 install requirements.txt
+    pip3 install -r requirements.txt
     apt install libgl1-mesa-glx
     ```
 

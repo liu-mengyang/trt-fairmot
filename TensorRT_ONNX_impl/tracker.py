@@ -284,13 +284,13 @@ class FairTracker(object):
                           'id': torch.zeros(io_info[3][2][0],io_info[3][2][1],io_info[3][2][2],io_info[3][2][3]).cuda().float()}
 
                 # input from device to device
-            cuda.memcpy_dtod(d_buffers[0], PyTorchTensorHolder(im_blob), im_blob.nelement() * im_blob.element_size())
+                cuda.memcpy_dtod(d_buffers[0], PyTorchTensorHolder(im_blob), im_blob.nelement() * im_blob.element_size())
 
-            self.model.execute(d_buffers, i2shape)
+                self.model.execute(d_buffers, i2shape)
 
-            cuda.memcpy_dtod(PyTorchTensorHolder(output['hm']), d_buffers[1], output['hm'].nelement() * output['hm'].element_size())
-            cuda.memcpy_dtod(PyTorchTensorHolder(output['wh']), d_buffers[2], output['wh'].nelement() * output['wh'].element_size())
-            cuda.memcpy_dtod(PyTorchTensorHolder(output['id']), d_buffers[3], output['id'].nelement() * output['id'].element_size())
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['hm']), d_buffers[1], output['hm'].nelement() * output['hm'].element_size())
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['wh']), d_buffers[2], output['wh'].nelement() * output['wh'].element_size())
+                cuda.memcpy_dtod(PyTorchTensorHolder(output['id']), d_buffers[3], output['id'].nelement() * output['id'].element_size())
             else:
                 # infer_st = time.time()
                 output = self.model(im_blob)[-1]

@@ -2,6 +2,10 @@
 
 该项目实现了多目标跟踪算法FairMOT的TensorRT版本，是DLA34骨干网络版本。
 
+## 最新动态
+
+- (2021.05.21) 本项目的工作在【NVIDIA-阿里云 异构计算 Hackathon2021】中取得了三等奖的好成绩，感谢NV评审团队对我们工作的认可！
+
 ## 可运行的环境
 
 本项目推荐在Linux系统下使用tensorrt:21.02-py3版本的[NGC TensorRT Docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)容器运行，此外你需要一块算力较强的GPU显卡作为硬件设备。
